@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 660 270" width="660" height="270">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 660 400" width="660" height="400">
   <style>
     .lane { fill: none; stroke: #ccd6dd; stroke-width: 1.5; }
     .packet { fill: white; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
@@ -7,7 +7,7 @@
     .body { font-size: 12; stroke: red; }
     .annotation { fill: #f8f8f8; stroke: #d0d7de; stroke-width: 1; rx: 6; ry: 6; }
   </style>
-  <rect x="-10" y="-10" width="660" height="100" fill="#ffffff" />
+  <rect x="-10" y="-10" width="660" height="400" fill="#ffffff" />
   <line x1="160" y1="40" x2="160" y2="260" class="lane" />
   <line x1="480" y1="40" x2="480" y2="260" class="lane" />
   <text x="120" y="30" class="title" font-family="Arial">Client</text>

@@ -27,7 +27,7 @@
     </diag:flex>
   </diag:template>
 
-  <rect x="-10" y="-10" width="660" height="100" fill="#ffffff" />
+  <rect x="-10" y="-10" width="660" height="400" fill="#ffffff" />
 
   <line x1="160" y1="40" x2="160" y2="260" class="lane" />
   <line x1="480" y1="40" x2="480" y2="260" class="lane" />
