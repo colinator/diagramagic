@@ -1,0 +1,27 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  diag:font-family="Courier New"
+>
+  <style>
+    .note { fill: #2fef12ff; stroke: #2a6fdb; stroke-width: 1.4; rx: 10; ry: 10; }
+    .heading { font-size: 15; font-weight: 600; }
+    .details { font-size: 12; }
+  </style>
+
+  <diag:flex
+    width="220"
+    direction="column"
+    padding="16"
+    gap="10"
+    background-class="note"
+  >
+    <text class="heading" diag:wrap="false">Deployment Checklist</text>
+    <text class="details" diag:wrap="true">
+      Verify application images are published, run the smoke suite, and update rollback plan references.
+    </text>
+    <text class="details" diag:wrap="true">
+      Coordinate outage announcement with support and capture any customer-impacting observations.
+    </text>
+  </diag:flex>
+</diag:diagram>

@@ -1,0 +1,51 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  diag:font-family="Helvetica"
+>
+  <style>
+    .board { fill: #f8f8ff; stroke: #c9d1d9; stroke-width: 1.3; }
+    .card { fill: white; stroke: #8b949e; stroke-width: 1.1; rx: 10; ry: 10; }
+    .title { font-size: 15; font-weight: 600; }
+    .body { font-size: 13; }
+    .label { font-size: 12; font-style: italic; }
+  </style>
+
+  <diag:flex
+    x="24"
+    y="24"
+    width="472"
+    direction="column"
+    gap="18"
+    padding="18"
+    background-class="board"
+  >
+    <text class="title" diag:wrap="false">Model Context Protocol (MCP)</text>
+    <text class="label" diag:wrap="true">
+      Servers expose resources and actions. Clients (LLMs, IDEs) talk to servers over transports like stdio, WebSockets, or HTTP.
+    </text>
+
+    <diag:flex direction="row" gap="16">
+      <diag:flex width="220" direction="column" padding="12" gap="8" background-class="card">
+        <text class="title" diag:wrap="false">Servers</text>
+        <text class="body" diag:wrap="true">
+          Provide named resources (documents, settings) and actions (render, run command, fetch secrets). Publish capability schema.
+        </text>
+      </diag:flex>
+
+      <diag:flex width="220" direction="column" padding="12" gap="8" background-class="card">
+        <text class="title" diag:wrap="false">Clients</text>
+        <text class="body" diag:wrap="true">
+          Discover available servers, subscribe to resources, and invoke actions. Translate user intent into MCP calls.
+        </text>
+      </diag:flex>
+    </diag:flex>
+
+    <diag:flex direction="column" padding="12" gap="6" background-class="card">
+      <text class="title" diag:wrap="false">Transports</text>
+      <text class="body" diag:wrap="true">
+        Stdio · WebSocket · HTTP long-polling. Each transport carries JSON-RPC frames; MCP is transport-agnostic.
+      </text>
+    </diag:flex>
+  </diag:flex>
+</diag:diagram>

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 660 270" width="660" height="270">
+  <style>
+    .lane { fill: none; stroke: #ccd6dd; stroke-width: 1.5; }
+    .packet { fill: white; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
+    .packet-server { fill: #fdfdfd; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
+    .title { font-size: 14; font-weight: 600; }
+    .body { font-size: 12; stroke: red; }
+    .annotation { fill: #f8f8f8; stroke: #d0d7de; stroke-width: 1; rx: 6; ry: 6; }
+  </style>
+  <rect x="-10" y="-10" width="660" height="100" fill="#ffffff" />
+  <line x1="160" y1="40" x2="160" y2="260" class="lane" />
+  <line x1="480" y1="40" x2="480" y2="260" class="lane" />
+  <text x="120" y="30" class="title" font-family="Arial">Client</text>
+  <text x="440" y="30" class="title" font-family="Arial">Server</text>
+  <g transform="translate(135, 70)">
+    <rect x="0" y="0" width="115.234" height="35" class="packet" />
+    <g transform="translate(8, 8)">
+      <text class="body" font-family="Arial" y="15">SYN seq=100</text>
+    </g>
+  </g>
+  <g transform="translate(380, 130)">
+    <rect x="0" y="0" width="218.891" height="35" class="packet-server" />
+    <g transform="translate(8, 8)">
+      <text class="body" font-family="Arial" y="15">SYN-ACK seq=500 ack=101</text>
+    </g>
+  </g>
+  <g transform="translate(135, 210)">
+    <rect x="0" y="0" width="114.328" height="35" class="packet" />
+    <g transform="translate(8, 8)">
+      <text class="body" font-family="Arial" y="15">ACK ack=501</text>
+    </g>
+  </g>
+  <g transform="scale(0.8)">
+    <g transform="translate(12.5, 137.5)">
+      <rect x="0" y="0" width="220" height="98" class="annotation" />
+      <g transform="translate(8, 8)">
+        <text class="title" font-family="Arial" y="15">1. SYN</text>
+      </g>
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
+          <tspan x="0" dy="0">Client proposes initial</tspan>
+          <tspan x="0" dy="1.2em">sequence number and</tspan>
+          <tspan x="0" dy="1.2em">opens the connection.</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+  <g transform="scale(0.8)">
+    <g transform="translate(475, 237.5)">
+      <rect x="0" y="0" width="220" height="98" class="annotation" />
+      <g transform="translate(8, 8)">
+        <text class="title" font-family="Arial" y="15">2. SYN-ACK</text>
+      </g>
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
+          <tspan x="0" dy="0">Server replies with its</tspan>
+          <tspan x="0" dy="1.2em">sequence number and</tspan>
+          <tspan x="0" dy="1.2em">acknowledges the client.</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+  <g transform="scale(0.8)">
+    <g transform="translate(12.5, 300)">
+      <rect x="0" y="0" width="220" height="117" class="annotation" />
+      <g transform="translate(8, 8)">
+        <text class="title" font-family="Arial" y="15">3. ACK</text>
+      </g>
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
+          <tspan x="0" dy="0">Client acknowledges the</tspan>
+          <tspan x="0" dy="1.2em">server. Connection is</tspan>
+          <tspan x="0" dy="1.2em">established and data can</tspan>
+          <tspan x="0" dy="1.2em">flow.</tspan>
+        </text>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,47 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  diag:font-family="Arial"
+>
+  <style>
+    .board { fill: #fbfbfb; stroke: #d0d0d0; stroke-width: 1.2; }
+    .card { fill: white; stroke: #7d8590; stroke-width: 1.1; rx: 8; ry: 8; }
+    .title { font-size: 14; font-weight: 600; }
+    .body { font-size: 12; }
+  </style>
+
+  <diag:flex
+    width="300"
+    direction="column"
+    padding="18"
+    gap="18"
+    background-class="board"
+  >
+    <diag:flex
+      direction="column"
+      padding="12"
+      gap="6"
+      background-class="card"
+    >
+      <text class="title" diag:wrap="false">Plan</text>
+      <text class="body" diag:wrap="true">
+        Identify components that need refactoring and document the expected owner for each area of work.
+      </text>
+    </diag:flex>
+
+    <diag:flex
+      direction="column"
+      padding="12"
+      gap="12"
+      background-class="card"
+    >
+      <text class="title" diag:wrap="false">Execute</text>
+      <text class="body" diag:wrap="true">
+        Schedule pair sessions so context is not lost, and capture follow-up tasks inside the shared tracker.
+      </text>
+      <text class="body" diag:wrap="true">
+        Share daily summaries to keep non-attending stakeholders informed.
+      </text>
+    </diag:flex>
+  </diag:flex>
+</diag:diagram>

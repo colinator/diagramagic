@@ -1,0 +1,30 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  width="500"
+  height="200"
+  viewBox="0 0 500 200"
+>
+  <style>
+    .panel { fill: #fffbe6; stroke: #d4a017; stroke-width: 1.5; }
+    .label { font-size: 14; font-weight: 500; }
+    .text { font-size: 12; }
+  </style>
+  <diag:flex
+    x="30"
+    y="60"
+    direction="row"
+    gap="14"
+    padding="16"
+    background-class="panel"
+  >
+    <text class="label" diag:wrap="false">Step 1</text>
+    <text class="text" diag:wrap="true" diag:max-width="180">
+      Gather requirements from the stakeholder group and note open questions.
+    </text>
+    <text class="label" diag:wrap="false">Step 2</text>
+    <text class="text" diag:wrap="true" diag:max-width="160">
+      Iterate on the diagram until consensus is reached.
+    </text>
+  </diag:flex>
+</diag:diagram>

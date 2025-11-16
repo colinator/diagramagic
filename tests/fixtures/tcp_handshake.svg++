@@ -1,0 +1,69 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  diag:font-family="Arial"
+>
+  <style>
+    .lane { fill: none; stroke: #ccd6dd; stroke-width: 1.5; }
+    .packet { fill: white; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
+    .packet-server { fill: #fdfdfd; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
+    .title { font-size: 14; font-weight: 600; }
+    .body { font-size: 12; stroke: red; }
+    .annotation { fill: #f8f8f8; stroke: #d0d7de; stroke-width: 1; rx: 6; ry: 6; }
+  </style>
+
+  <diag:template name="packet">
+    <diag:flex padding="8">
+      <text class="body" diag:wrap="true">
+        <diag:slot name="content" />
+      </text>
+    </diag:flex>
+  </diag:template>
+
+  <diag:template name="note">
+    <diag:flex width="220" direction="column" gap="6" background-class="annotation" padding="8">
+      <text class="title" diag:wrap="false"><diag:slot name="title" /></text>
+      <text class="body" diag:wrap="true"><diag:slot name="body" /></text>
+    </diag:flex>
+  </diag:template>
+
+  <rect x="-10" y="-10" width="660" height="100" fill="#ffffff" />
+
+  <line x1="160" y1="40" x2="160" y2="260" class="lane" />
+  <line x1="480" y1="40" x2="480" y2="260" class="lane" />
+  <text x="120" y="30" class="title">Client</text>
+  <text x="440" y="30" class="title">Server</text>
+
+  <diag:instance template="packet" x="135" y="70" background-class="packet" diag:max-width="180">
+    <diag:param name="content">SYN seq=100</diag:param>
+  </diag:instance>
+
+  <diag:instance template="packet" x="380" y="130" background-class="packet-server" diag:max-width="200">
+    <diag:param name="content">SYN-ACK seq=500 ack=101</diag:param>
+  </diag:instance>
+
+  <diag:instance template="packet" x="135" y="210" background-class="packet" diag:max-width="200">
+    <diag:param name="content">ACK ack=501</diag:param>
+  </diag:instance>
+
+  <g transform="scale(0.8)">
+    <diag:instance template="note" x="12.5" y="137.5">
+      <diag:param name="title">1. SYN</diag:param>
+      <diag:param name="body">Client proposes initial sequence number and opens the connection.</diag:param>
+    </diag:instance>
+  </g>
+
+  <g transform="scale(0.8)">
+    <diag:instance template="note" x="475" y="237.5">
+      <diag:param name="title">2. SYN-ACK</diag:param>
+      <diag:param name="body">Server replies with its sequence number and acknowledges the client.</diag:param>
+    </diag:instance>
+  </g>
+
+  <g transform="scale(0.8)">
+    <diag:instance template="note" x="12.5" y="300">
+      <diag:param name="title">3. ACK</diag:param>
+      <diag:param name="body">Client acknowledges the server. Connection is established and data can flow.</diag:param>
+    </diag:instance>
+  </g>
+</diag:diagram>

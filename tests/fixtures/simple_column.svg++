@@ -1,0 +1,26 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  width="300"
+  height="180"
+  viewBox="0 0 300 180"
+>
+  <style>
+    .card { fill: #f5f5f5; stroke: #333; stroke-width: 1.25; rx: 6; ry: 6; }
+    .title { font-size: 16; font-weight: 600; }
+    .body { font-size: 13; }
+  </style>
+  <diag:flex
+    x="20"
+    y="25"
+    width="160"
+    direction="column"
+    padding="12"
+    gap="8"
+    background-class="card"
+  >
+    <text class="title" diag:wrap="false">Account</text>
+    <text class="body" diag:wrap="false">id: UUID</text>
+    <text class="body" diag:wrap="false">balance: Decimal</text>
+  </diag:flex>
+</diag:diagram>
