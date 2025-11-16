@@ -1,0 +1,18 @@
+<diag:diagram
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:diag="https://example.com/diag"
+  width="360"
+  height="160"
+  viewBox="0 0 360 160"
+>
+  <style>
+    .badge { fill:#e7f5ff; stroke:#74c0fc; stroke-width:1.1; rx:8; ry:8; }
+    .title { font-size:13; font-weight:600; }
+  </style>
+
+  <diag:flex x="24" y="60" direction="row" gap="12" padding="12" background-class="badge">
+    <text class="title" diag:wrap="false">Connect</text>
+    <text class="title" diag:wrap="false">Authenticate</text>
+    <text class="title" diag:wrap="false">Render</text>
+  </diag:flex>
+</diag:diagram>
