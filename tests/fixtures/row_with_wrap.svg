@@ -1,29 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="536.594" height="200" viewBox="0 0 536.594 160">
+<svg xmlns="http://www.w3.org/2000/svg" width="550.56" height="200" viewBox="0 0 550.56 172">
   <style>
     .panel { fill: #fffbe6; stroke: #d4a017; stroke-width: 1.5; }
     .label { font-size: 14; font-weight: 500; }
     .text { font-size: 12; }
   </style>
   <g transform="translate(30, 60)">
-    <rect x="0" y="0" width="506.594" height="100" class="panel" />
+    <rect x="0" y="0" width="520.56" height="112" class="panel" />
     <g transform="translate(16, 16)">
-      <text class="label" font-family="sans-serif" y="13">Step 1</text>
+      <text class="label" font-family="sans-serif" y="12.8">Step 1</text>
     </g>
-    <g transform="translate(76.297, 16)">
-      <text class="text" font-family="sans-serif" y="13">
+    <g transform="translate(83.28, 16)">
+      <text class="text" font-family="sans-serif" y="12.8">
         <tspan x="0" dy="0">Gather requirements</tspan>
-        <tspan x="0" dy="1.2em">from the stakeholder</tspan>
-        <tspan x="0" dy="1.2em">group and note open</tspan>
+        <tspan x="0" dy="1.2em">from the</tspan>
+        <tspan x="0" dy="1.2em">stakeholder group</tspan>
+        <tspan x="0" dy="1.2em">and note open</tspan>
         <tspan x="0" dy="1.2em">questions.</tspan>
       </text>
     </g>
-    <g transform="translate(270.297, 16)">
-      <text class="label" font-family="sans-serif" y="13">Step 2</text>
+    <g transform="translate(277.28, 16)">
+      <text class="label" font-family="sans-serif" y="12.8">Step 2</text>
     </g>
-    <g transform="translate(330.594, 16)">
-      <text class="text" font-family="sans-serif" y="13">
-        <tspan x="0" dy="0">Iterate on the diagram</tspan>
-        <tspan x="0" dy="1.2em">until consensus is</tspan>
+    <g transform="translate(344.56, 16)">
+      <text class="text" font-family="sans-serif" y="12.8">
+        <tspan x="0" dy="0">Iterate on the</tspan>
+        <tspan x="0" dy="1.2em">diagram until</tspan>
+        <tspan x="0" dy="1.2em">consensus is</tspan>
         <tspan x="0" dy="1.2em">reached.</tspan>
       </text>
     </g>

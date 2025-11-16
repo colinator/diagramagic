@@ -5,7 +5,7 @@ svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits p
 ## Quick Start
 
 - Spec + motivation: `PROJECTSPEC.md`
-- Agent cheat sheet: `AGENTS.md`
+- Agent cheat sheet: `AGENTS.md` (`diagramagic --cheatsheet` prints it after install)
 - CLI: `diagramagic input.svg++ > output.svg`
 - Tests/fixtures: `python tests/run_tests.py`
 - Library use: `from diagramagic import diagramagic` (module lives in `src/`).

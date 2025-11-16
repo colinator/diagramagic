@@ -1,19 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 180 116">
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 183.68 113">
   <style>
     .card { fill: #f5f5f5; stroke: #333; stroke-width: 1.25; rx: 6; ry: 6; }
     .title { font-size: 16; font-weight: 600; }
     .body { font-size: 13; }
   </style>
   <g transform="translate(20, 25)">
-    <rect x="0" y="0" width="160" height="91" class="card" />
+    <rect x="0" y="0" width="163.68" height="88" class="card" />
     <g transform="translate(12, 12)">
-      <text class="title" font-family="sans-serif" y="13">Account</text>
+      <text class="title" font-family="sans-serif" y="12.8">Account</text>
     </g>
-    <g transform="translate(12, 37)">
-      <text class="body" font-family="sans-serif" y="13">id: UUID</text>
+    <g transform="translate(12, 36)">
+      <text class="body" font-family="sans-serif" y="12.8">id: UUID</text>
     </g>
-    <g transform="translate(12, 62)">
-      <text class="body" font-family="sans-serif" y="13">balance: Decimal</text>
+    <g transform="translate(12, 60)">
+      <text class="body" font-family="sans-serif" y="12.8">balance: Decimal</text>
     </g>
   </g>
 </svg>

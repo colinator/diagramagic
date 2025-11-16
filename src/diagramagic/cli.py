@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable, Optional, Tuple
 
 from .diagramagic import diagramagic
+from .resources import load_cheatsheet
 
 
 class ConversionError(Exception):
@@ -42,6 +43,11 @@ def parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Write the generated SVG to stdout instead of a file (single conversion only)",
     )
+    parser.add_argument(
+        "--cheatsheet",
+        action="store_true",
+        help="Print a quick reference for svg++ and exit",
+    )
     return parser.parse_args(list(argv) if argv is not None else None)
 
 
@@ -74,6 +80,10 @@ def convert_source(kind: str, payload: str) -> str:
 
 def main(argv: Optional[Iterable[str]] = None) -> int:
     args = parse_args(argv)
+
+    if args.cheatsheet:
+        print(load_cheatsheet())
+        return 0
     try:
         sources = gather_sources(args)
     except ConversionError as exc:

@@ -1,25 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="664.891" height="186" viewBox="0 0 664.891 186">
+<svg xmlns="http://www.w3.org/2000/svg" width="793.92" height="180" viewBox="0 0 793.92 180">
   <style>
     .panel { fill:#fff; stroke:#d0d7de; stroke-width:1.2; rx:8; ry:8; }
     .label { font-size:13; font-weight:600; }
     .body { font-size:12; }
   </style>
   <g transform="translate(20, 20)">
-    <rect x="0" y="0" width="644.891" height="166" class="panel" />
+    <rect x="0" y="0" width="773.92" height="160" class="panel" />
     <g transform="translate(14, 14)">
-      <text class="label" font-family="sans-serif" y="13">Unwrapped</text>
+      <text class="label" font-family="sans-serif" y="12.8">Unwrapped</text>
     </g>
-    <g transform="translate(14, 43)">
-      <text class="body" font-family="sans-serif" y="13">This sentence keeps going and will overflow the panel width unless the viewer wraps it.</text>
+    <g transform="translate(14, 42)">
+      <text class="body" font-family="sans-serif" y="12.8">This sentence keeps going and will overflow the panel width unless the viewer wraps it.</text>
     </g>
-    <g transform="translate(14, 72)">
-      <text class="label" font-family="sans-serif" y="13">Wrapped</text>
+    <g transform="translate(14, 70)">
+      <text class="label" font-family="sans-serif" y="12.8">Wrapped</text>
     </g>
-    <g transform="translate(14, 101)">
-      <text class="body" font-family="sans-serif" y="13">
+    <g transform="translate(14, 98)">
+      <text class="body" font-family="sans-serif" y="12.8">
         <tspan x="0" dy="0">This sentence is wrapped by the</tspan>
-        <tspan x="0" dy="1.2em">renderer so it always fits within the</tspan>
-        <tspan x="0" dy="1.2em">container.</tspan>
+        <tspan x="0" dy="1.2em">renderer so it always fits</tspan>
+        <tspan x="0" dy="1.2em">within the container.</tspan>
       </text>
     </g>
   </g>

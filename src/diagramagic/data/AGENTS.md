@@ -42,6 +42,6 @@ svg++ is just SVG with a handful of extra `diag:` elements and attributes. Start
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
 - For nested layouts without explicit widths, the parent’s available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
-- Need a quick conversion in a workflow? Run `diagramagic input.svg++ > output.svg` or `diagramagic --cheatsheet` for this reference.
+- Need a quick conversion in a workflow? Run `diagramagic input.svg++ > output.svg` once the package is installed.
 
 For full semantics (grammar, examples, future extensions) see `PROJECTSPEC.md`.

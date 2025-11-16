@@ -1,18 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="360" height="160" viewBox="0 0 273.188 101">
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="160" viewBox="0 0 307.2 100">
   <style>
     .badge { fill:#e7f5ff; stroke:#74c0fc; stroke-width:1.1; rx:8; ry:8; }
     .title { font-size:13; font-weight:600; }
   </style>
   <g transform="translate(24, 60)">
-    <rect x="0" y="0" width="249.188" height="41" class="badge" />
+    <rect x="0" y="0" width="283.2" height="40" class="badge" />
     <g transform="translate(12, 12)">
-      <text class="title" font-family="sans-serif" y="13">Connect</text>
+      <text class="title" font-family="sans-serif" y="12.8">Connect</text>
     </g>
-    <g transform="translate(83.641, 12)">
-      <text class="title" font-family="sans-serif" y="13">Authenticate</text>
+    <g transform="translate(91.2, 12)">
+      <text class="title" font-family="sans-serif" y="12.8">Authenticate</text>
     </g>
-    <g transform="translate(184.672, 12)">
-      <text class="title" font-family="sans-serif" y="13">Render</text>
+    <g transform="translate(213.6, 12)">
+      <text class="title" font-family="sans-serif" y="12.8">Render</text>
     </g>
   </g>
 </svg>
