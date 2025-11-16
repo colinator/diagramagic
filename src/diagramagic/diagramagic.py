@@ -202,7 +202,13 @@ def _q(tag: str) -> str:
 
 def diagramagic(svgpp_source: str) -> str:
     """Convert svg++ markup to plain SVG."""
-    root = ET.fromstring(svgpp_source)
+    try:
+        root = ET.fromstring(svgpp_source)
+    except ET.ParseError as exc:
+        raise ValueError(
+            "Failed to parse svg++ input. Ensure XML entities like &, <, > are escaped "
+            "(use &amp;, &lt;, &gt;)."
+        ) from exc
     diag_ns = _namespace_of(root.tag)
     if not diag_ns:
         raise ValueError("Input does not contain a diag namespace root element")

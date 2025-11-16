@@ -2,4 +2,7 @@
 .DS_Store
 .pyvenv
 __pycache__
-
+notes.txt
+**egg-info
+*.whl
+*.tar.gz
