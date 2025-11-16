@@ -1,6 +1,6 @@
 # diagramagic
 
-svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits plain SVG—no runtime, no exotic format.
+svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits plain SVG—no runtime, no exotic format. What is "svg++"? Just something we made up here: it's simply svg plus a few additions to support text layout and templates.
 
 ## Quick Start
 
