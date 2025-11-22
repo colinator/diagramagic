@@ -2,14 +2,31 @@
 
 svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits plain SVG—no runtime, no exotic format. What is "svg++"? Just something we made up here: it's simply svg plus a few additions to support text layout and templates.
 
+## Installation
+
+```bash
+pip install diagramagic
+```
+
+**Note**: This package includes a Rust extension for accurate SVG measurement. During installation, the extension will be compiled from source, which requires the Rust toolchain:
+
+```bash
+# Install Rust (if not already installed)
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Then install diagramagic
+pip install diagramagic
+```
+
+Installation typically takes 30-60 seconds while the Rust extension compiles.
+
 ## Quick Start
 
-- Spec + motivation: `PROJECTSPEC.md`
-- Agent cheat sheet: `AGENTS.md` (`diagramagic --cheatsheet` prints it after install)
-- CLI: `diagramagic input.svg++ > output.svg`
-- Tests/fixtures: `python tests/run_tests.py`
-- Library use: `from diagramagic import diagramagic` (module lives in `src/`).
-- Build notes: requires a Rust toolchain (Cargo) to compile the bundled resvg-based measurement extension for accurate bounding boxes.
+- **CLI**: `diagramagic input.svg++ > output.svg`
+- **Library**: `from diagramagic import diagramagic`
+- **Cheat sheet**: `diagramagic --cheatsheet` (or see `AGENTS.md`)
+- **Full spec**: `PROJECTSPEC.md`
+- **Tests**: `python tests/run_tests.py`
 
 svg++ basics: wrap your document in `<diag:diagram>` with the `diag:` namespace, use `<diag:flex>` for layout, and `diag:wrap="true"` on `<text>` to wrap. Everything compiles to pure SVG 1.1.
 
