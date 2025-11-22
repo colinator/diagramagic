@@ -8,7 +8,7 @@ svg++ is just SVG with a handful of extra `diag:` elements and attributes. Start
 
 ## Elements
 
-- `<diag:diagram>` — root container. Set normal `<svg>` attributes (`width`, `height`, `viewBox`, styles). Optional `diag:font-family` / `diag:font-path` apply to all descendants.
+- `<diag:diagram>` — root container. Set normal `<svg>` attributes (`width`, `height`, `viewBox`, styles). Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent).
 - `<diag:flex>` — column/row layout block.
   - Attributes: `x`, `y`, `width` (total width), `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
   - Children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.

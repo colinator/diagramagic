@@ -14,6 +14,8 @@ svg++ basics: wrap your document in `<diag:diagram>` with the `diag:` namespace,
 
 Need reusable pieces? Define `<diag:template name="card">…</diag:template>` once, then drop `<diag:instance template="card">` wherever you need consistent cards or packets.
 
+Output defaults to a white canvas; set `diag:background="none"` (or any color) on `<diag:diagram>` to change it.
+
 Example:
 
 ```xml

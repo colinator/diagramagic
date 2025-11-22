@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 516 448" width="516" height="448">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 516 397" width="516" height="397">
+  <rect x="0" y="0" width="516" height="397" fill="#fff" />
   <style>
     .board { fill: #f8f8ff; stroke: #c9d1d9; stroke-width: 1.3; }
     .card { fill: white; stroke: #8b949e; stroke-width: 1.1; rx: 10; ry: 10; }
@@ -7,70 +8,65 @@
     .label { font-size: 12; font-style: italic; }
   </style>
   <g transform="translate(24, 24)">
-    <rect x="0" y="0" width="492" height="424" class="board" />
+    <rect x="0" y="0" width="492" height="373" class="board" />
     <g transform="translate(18, 18)">
-      <text class="title" font-family="Helvetica" y="12.8">Model Context Protocol (MCP)</text>
+      <text class="title" font-family="Helvetica" y="13">Model Context Protocol (MCP)</text>
     </g>
-    <g transform="translate(18, 52)">
-      <text class="label" font-family="Helvetica" y="12.8">
-        <tspan x="0" dy="0">Servers expose resources and actions. Clients</tspan>
-        <tspan x="0" dy="1.2em">(LLMs, IDEs) talk to servers over transports like</tspan>
-        <tspan x="0" dy="1.2em">stdio, WebSockets, or HTTP.</tspan>
+    <g transform="translate(18, 53)">
+      <text class="label" font-family="Helvetica" y="13">
+        <tspan x="0" dy="0">Servers expose resources and actions. Clients (LLMs, IDEs)</tspan>
+        <tspan x="0" dy="1.2em">talk to servers over transports like stdio, WebSockets, or</tspan>
+        <tspan x="0" dy="1.2em">HTTP.</tspan>
       </text>
     </g>
-    <g transform="translate(18, 118)">
+    <g transform="translate(18, 122)">
       <g transform="translate(0, 0)">
         <g transform="translate(0, 0)">
           <g transform="translate(0, 0)">
-            <rect x="0" y="0" width="220" height="176" class="card" />
+            <rect x="0" y="0" width="220" height="134" class="card" />
             <g transform="translate(12, 12)">
-              <text class="title" font-family="Helvetica" y="12.8">Servers</text>
+              <text class="title" font-family="Helvetica" y="13">Servers</text>
             </g>
-            <g transform="translate(12, 36)">
-              <text class="body" font-family="Helvetica" y="12.8">
-                <tspan x="0" dy="0">Provide named</tspan>
-                <tspan x="0" dy="1.2em">resources</tspan>
-                <tspan x="0" dy="1.2em">(documents,</tspan>
-                <tspan x="0" dy="1.2em">settings) and actions</tspan>
-                <tspan x="0" dy="1.2em">(render, run</tspan>
-                <tspan x="0" dy="1.2em">command, fetch</tspan>
-                <tspan x="0" dy="1.2em">secrets). Publish</tspan>
-                <tspan x="0" dy="1.2em">capability schema.</tspan>
+            <g transform="translate(12, 37)">
+              <text class="body" font-family="Helvetica" y="13">
+                <tspan x="0" dy="0">Provide named resources</tspan>
+                <tspan x="0" dy="1.2em">(documents, settings) and</tspan>
+                <tspan x="0" dy="1.2em">actions (render, run</tspan>
+                <tspan x="0" dy="1.2em">command, fetch secrets).</tspan>
+                <tspan x="0" dy="1.2em">Publish capability schema.</tspan>
               </text>
             </g>
           </g>
         </g>
         <g transform="translate(236, 0)">
           <g transform="translate(0, 0)">
-            <rect x="0" y="0" width="220" height="144" class="card" />
+            <rect x="0" y="0" width="220" height="134" class="card" />
             <g transform="translate(12, 12)">
-              <text class="title" font-family="Helvetica" y="12.8">Clients</text>
+              <text class="title" font-family="Helvetica" y="13">Clients</text>
             </g>
-            <g transform="translate(12, 36)">
-              <text class="body" font-family="Helvetica" y="12.8">
-                <tspan x="0" dy="0">Discover available</tspan>
-                <tspan x="0" dy="1.2em">servers, subscribe to</tspan>
-                <tspan x="0" dy="1.2em">resources, and invoke</tspan>
-                <tspan x="0" dy="1.2em">actions. Translate</tspan>
-                <tspan x="0" dy="1.2em">user intent into MCP</tspan>
-                <tspan x="0" dy="1.2em">calls.</tspan>
+            <g transform="translate(12, 37)">
+              <text class="body" font-family="Helvetica" y="13">
+                <tspan x="0" dy="0">Discover available servers,</tspan>
+                <tspan x="0" dy="1.2em">subscribe to resources,</tspan>
+                <tspan x="0" dy="1.2em">and invoke actions.</tspan>
+                <tspan x="0" dy="1.2em">Translate user intent into</tspan>
+                <tspan x="0" dy="1.2em">MCP calls.</tspan>
               </text>
             </g>
           </g>
         </g>
       </g>
     </g>
-    <g transform="translate(18, 312)">
+    <g transform="translate(18, 274)">
       <g transform="translate(0, 0)">
-        <rect x="0" y="0" width="436" height="94" class="card" />
+        <rect x="0" y="0" width="436" height="81" class="card" />
         <g transform="translate(12, 12)">
-          <text class="title" font-family="Helvetica" y="12.8">Transports</text>
+          <text class="title" font-family="Helvetica" y="13">Transports</text>
         </g>
-        <g transform="translate(12, 34)">
-          <text class="body" font-family="Helvetica" y="12.8">
-            <tspan x="0" dy="0">Stdio · WebSocket · HTTP long-polling. Each</tspan>
-            <tspan x="0" dy="1.2em">transport carries JSON-RPC frames; MCP is</tspan>
-            <tspan x="0" dy="1.2em">transport-agnostic.</tspan>
+        <g transform="translate(12, 35)">
+          <text class="body" font-family="Helvetica" y="13">
+            <tspan x="0" dy="0">Stdio · WebSocket · HTTP long-polling. Each transport</tspan>
+            <tspan x="0" dy="1.2em">carries JSON-RPC frames; MCP is transport-agnostic.</tspan>
           </text>
         </g>
       </g>

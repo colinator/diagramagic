@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 660 400" width="660" height="400">
+  <rect x="-10" y="-10" width="660" height="400" fill="#fff" />
   <style>
     .lane { fill: none; stroke: #ccd6dd; stroke-width: 1.5; }
     .packet { fill: white; stroke: #586069; stroke-width: 1; rx: 6; ry: 6; }
@@ -13,31 +14,31 @@
   <text x="120" y="30" class="title" font-family="Arial">Client</text>
   <text x="440" y="30" class="title" font-family="Arial">Server</text>
   <g transform="translate(135, 70)">
-    <rect x="0" y="0" width="117.28" height="32" class="packet" />
+    <rect x="0" y="0" width="115.234" height="35" class="packet" />
     <g transform="translate(8, 8)">
-      <text class="body" font-family="Arial" y="12.8">SYN seq=100</text>
+      <text class="body" font-family="Arial" y="15">SYN seq=100</text>
     </g>
   </g>
   <g transform="translate(380, 130)">
-    <rect x="0" y="0" width="228.16" height="32" class="packet-server" />
+    <rect x="0" y="0" width="218.891" height="35" class="packet-server" />
     <g transform="translate(8, 8)">
-      <text class="body" font-family="Arial" y="12.8">SYN-ACK seq=500 ack=101</text>
+      <text class="body" font-family="Arial" y="15">SYN-ACK seq=500 ack=101</text>
     </g>
   </g>
   <g transform="translate(135, 210)">
-    <rect x="0" y="0" width="117.28" height="32" class="packet" />
+    <rect x="0" y="0" width="114.328" height="35" class="packet" />
     <g transform="translate(8, 8)">
-      <text class="body" font-family="Arial" y="12.8">ACK ack=501</text>
+      <text class="body" font-family="Arial" y="15">ACK ack=501</text>
     </g>
   </g>
   <g transform="scale(0.8)">
     <g transform="translate(12.5, 137.5)">
-      <rect x="0" y="0" width="220" height="86" class="annotation" />
+      <rect x="0" y="0" width="220" height="98" class="annotation" />
       <g transform="translate(8, 8)">
-        <text class="title" font-family="Arial" y="12.8">1. SYN</text>
+        <text class="title" font-family="Arial" y="15">1. SYN</text>
       </g>
-      <g transform="translate(8, 30)">
-        <text class="body" font-family="Arial" y="12.8">
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
           <tspan x="0" dy="0">Client proposes initial</tspan>
           <tspan x="0" dy="1.2em">sequence number and</tspan>
           <tspan x="0" dy="1.2em">opens the connection.</tspan>
@@ -47,32 +48,31 @@
   </g>
   <g transform="scale(0.8)">
     <g transform="translate(475, 237.5)">
-      <rect x="0" y="0" width="220" height="102" class="annotation" />
+      <rect x="0" y="0" width="220" height="98" class="annotation" />
       <g transform="translate(8, 8)">
-        <text class="title" font-family="Arial" y="12.8">2. SYN-ACK</text>
+        <text class="title" font-family="Arial" y="15">2. SYN-ACK</text>
       </g>
-      <g transform="translate(8, 30)">
-        <text class="body" font-family="Arial" y="12.8">
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
           <tspan x="0" dy="0">Server replies with its</tspan>
           <tspan x="0" dy="1.2em">sequence number and</tspan>
-          <tspan x="0" dy="1.2em">acknowledges the</tspan>
-          <tspan x="0" dy="1.2em">client.</tspan>
+          <tspan x="0" dy="1.2em">acknowledges the client.</tspan>
         </text>
       </g>
     </g>
   </g>
   <g transform="scale(0.8)">
     <g transform="translate(12.5, 300)">
-      <rect x="0" y="0" width="220" height="102" class="annotation" />
+      <rect x="0" y="0" width="220" height="117" class="annotation" />
       <g transform="translate(8, 8)">
-        <text class="title" font-family="Arial" y="12.8">3. ACK</text>
+        <text class="title" font-family="Arial" y="15">3. ACK</text>
       </g>
-      <g transform="translate(8, 30)">
-        <text class="body" font-family="Arial" y="12.8">
+      <g transform="translate(8, 33)">
+        <text class="body" font-family="Arial" y="15">
           <tspan x="0" dy="0">Client acknowledges the</tspan>
           <tspan x="0" dy="1.2em">server. Connection is</tspan>
-          <tspan x="0" dy="1.2em">established and data</tspan>
-          <tspan x="0" dy="1.2em">can flow.</tspan>
+          <tspan x="0" dy="1.2em">established and data can</tspan>
+          <tspan x="0" dy="1.2em">flow.</tspan>
         </text>
       </g>
     </g>

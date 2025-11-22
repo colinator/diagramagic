@@ -6,3 +6,4 @@ notes.txt
 **egg-info
 *.whl
 *.tar.gz
+dist/

@@ -73,6 +73,7 @@ There must be exactly one top-level svg++ container.
 | `width` | Output SVG width |
 | `height` | Output SVG height |
 | `viewBox` | Output SVG viewBox string |
+| `diag:background` | Canvas background fill color. Defaults to white; set to `none`/`transparent` to keep the SVG transparent. |
 
 All other attributes are preserved and applied to the output `<svg>` element.
 

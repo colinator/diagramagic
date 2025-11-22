@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 356" width="300" height="356">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 379" width="300" height="379">
+  <rect x="0" y="0" width="300" height="379" fill="#fff" />
   <style>
     .board { fill: #fbfbfb; stroke: #d0d0d0; stroke-width: 1.2; }
     .card { fill: white; stroke: #7d8590; stroke-width: 1.1; rx: 8; ry: 8; }
@@ -6,43 +7,42 @@
     .body { font-size: 12; }
   </style>
   <g transform="translate(0, 0)">
-    <rect x="0" y="0" width="300" height="356" class="board" />
+    <rect x="0" y="0" width="300" height="379" class="board" />
     <g transform="translate(18, 18)">
       <g transform="translate(0, 0)">
-        <rect x="0" y="0" width="264" height="126" class="card" />
+        <rect x="0" y="0" width="264" height="125" class="card" />
         <g transform="translate(12, 12)">
-          <text class="title" font-family="Arial" y="12.8">Plan</text>
+          <text class="title" font-family="Arial" y="15">Plan</text>
         </g>
-        <g transform="translate(12, 34)">
-          <text class="body" font-family="Arial" y="12.8">
-            <tspan x="0" dy="0">Identify components that</tspan>
-            <tspan x="0" dy="1.2em">need refactoring and</tspan>
-            <tspan x="0" dy="1.2em">document the expected</tspan>
-            <tspan x="0" dy="1.2em">owner for each area of</tspan>
+        <g transform="translate(12, 37)">
+          <text class="body" font-family="Arial" y="15">
+            <tspan x="0" dy="0">Identify components that need</tspan>
+            <tspan x="0" dy="1.2em">refactoring and document the</tspan>
+            <tspan x="0" dy="1.2em">expected owner for each area of</tspan>
             <tspan x="0" dy="1.2em">work.</tspan>
           </text>
         </g>
       </g>
     </g>
-    <g transform="translate(18, 162)">
+    <g transform="translate(18, 161)">
       <g transform="translate(0, 0)">
-        <rect x="0" y="0" width="264" height="176" class="card" />
+        <rect x="0" y="0" width="264" height="200" class="card" />
         <g transform="translate(12, 12)">
-          <text class="title" font-family="Arial" y="12.8">Execute</text>
+          <text class="title" font-family="Arial" y="15">Execute</text>
         </g>
-        <g transform="translate(12, 40)">
-          <text class="body" font-family="Arial" y="12.8">
+        <g transform="translate(12, 43)">
+          <text class="body" font-family="Arial" y="15">
             <tspan x="0" dy="0">Schedule pair sessions so</tspan>
-            <tspan x="0" dy="1.2em">context is not lost, and</tspan>
-            <tspan x="0" dy="1.2em">capture follow-up tasks</tspan>
-            <tspan x="0" dy="1.2em">inside the shared tracker.</tspan>
+            <tspan x="0" dy="1.2em">context is not lost, and capture</tspan>
+            <tspan x="0" dy="1.2em">follow-up tasks inside the shared</tspan>
+            <tspan x="0" dy="1.2em">tracker.</tspan>
           </text>
         </g>
-        <g transform="translate(12, 116)">
-          <text class="body" font-family="Arial" y="12.8">
-            <tspan x="0" dy="0">Share daily summaries to</tspan>
-            <tspan x="0" dy="1.2em">keep non-attending</tspan>
-            <tspan x="0" dy="1.2em">stakeholders informed.</tspan>
+        <g transform="translate(12, 131)">
+          <text class="body" font-family="Arial" y="15">
+            <tspan x="0" dy="0">Share daily summaries to keep</tspan>
+            <tspan x="0" dy="1.2em">non-attending stakeholders</tspan>
+            <tspan x="0" dy="1.2em">informed.</tspan>
           </text>
         </g>
       </g>

@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 396 188">
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="260" viewBox="0 0 396 193">
+  <rect x="0" y="0" width="396" height="193" fill="#fff" />
   <style>
     .board { fill:#f5f8ff; stroke:#ccd6ff; stroke-width:1.2; }
     .lane { fill:#fff; stroke:#9ba7bd; stroke-width:1; rx:6; ry:6; }
@@ -6,18 +7,17 @@
     .body { font-size:12; }
   </style>
   <g transform="translate(24, 24)">
-    <rect x="0" y="0" width="372" height="164" class="board" />
+    <rect x="0" y="0" width="372" height="169" class="board" />
     <g transform="translate(16, 16)">
       <g transform="translate(0, 0)">
-        <rect x="0" y="0" width="160" height="112" class="lane" />
+        <rect x="0" y="0" width="160" height="100" class="lane" />
         <g transform="translate(12, 12)">
-          <text class="title" font-family="sans-serif" y="12.8">Backlog</text>
+          <text class="title" font-family="sans-serif" y="13">Backlog</text>
         </g>
-        <g transform="translate(12, 36)">
-          <text class="body" font-family="sans-serif" y="12.8">
-            <tspan x="0" dy="0">Collect</tspan>
-            <tspan x="0" dy="1.2em">feedback and</tspan>
-            <tspan x="0" dy="1.2em">create TODO</tspan>
+        <g transform="translate(12, 37)">
+          <text class="body" font-family="sans-serif" y="13">
+            <tspan x="0" dy="0">Collect feedback</tspan>
+            <tspan x="0" dy="1.2em">and create TODO</tspan>
             <tspan x="0" dy="1.2em">cards.</tspan>
           </text>
         </g>
@@ -25,22 +25,22 @@
     </g>
     <g transform="translate(192, 16)">
       <g transform="translate(0, 0)">
-        <rect x="0" y="0" width="160" height="132" class="lane" />
+        <rect x="0" y="0" width="160" height="137" class="lane" />
         <g transform="translate(12, 12)">
-          <text class="title" font-family="sans-serif" y="12.8">In Progress</text>
+          <text class="title" font-family="sans-serif" y="13">In Progress</text>
         </g>
-        <g transform="translate(12, 36)">
+        <g transform="translate(12, 37)">
           <g transform="translate(0, 0)">
-            <rect x="0" y="0" width="136" height="84" class="lane" />
+            <rect x="0" y="0" width="136" height="88" class="lane" />
             <g transform="translate(8, 8)">
-              <text class="body" font-family="sans-serif" y="12.8">
+              <text class="body" font-family="sans-serif" y="13">
                 <tspan x="0" dy="0">Implement</tspan>
                 <tspan x="0" dy="1.2em">svg++</tspan>
                 <tspan x="0" dy="1.2em">templates.</tspan>
               </text>
             </g>
-            <g transform="translate(8, 60)">
-              <text class="body" font-family="sans-serif" y="12.8">
+            <g transform="translate(8, 63)">
+              <text class="body" font-family="sans-serif" y="13">
                 <tspan x="0" dy="0">Polish CLI UX.</tspan>
               </text>
             </g>

@@ -1,25 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 244" width="220" height="244">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 224.188 299" width="224.188" height="299">
+  <rect x="0" y="0" width="224.188" height="299" fill="#fff" />
   <style>
     .note { fill: #2fef12ff; stroke: #2a6fdb; stroke-width: 1.4; rx: 10; ry: 10; }
     .heading { font-size: 15; font-weight: 600; }
     .details { font-size: 12; }
   </style>
   <g transform="translate(0, 0)">
-    <rect x="0" y="0" width="220" height="244" class="note" />
+    <rect x="0" y="0" width="224.188" height="299" class="note" />
     <g transform="translate(16, 16)">
-      <text class="heading" font-family="Courier New" y="12.8">Deployment Checklist</text>
+      <text class="heading" font-family="Courier New" y="14">Deployment Checklist</text>
     </g>
-    <g transform="translate(16, 42)">
-      <text class="details" font-family="Courier New" y="12.8">
+    <g transform="translate(16, 45)">
+      <text class="details" font-family="Courier New" y="14">
         <tspan x="0" dy="0">Verify application</tspan>
-        <tspan x="0" dy="1.2em">images are published,</tspan>
-        <tspan x="0" dy="1.2em">run the smoke suite,</tspan>
-        <tspan x="0" dy="1.2em">and update rollback</tspan>
+        <tspan x="0" dy="1.2em">images are</tspan>
+        <tspan x="0" dy="1.2em">published, run the</tspan>
+        <tspan x="0" dy="1.2em">smoke suite, and</tspan>
+        <tspan x="0" dy="1.2em">update rollback</tspan>
         <tspan x="0" dy="1.2em">plan references.</tspan>
       </text>
     </g>
-    <g transform="translate(16, 132)">
-      <text class="details" font-family="Courier New" y="12.8">
+    <g transform="translate(16, 169)">
+      <text class="details" font-family="Courier New" y="14">
         <tspan x="0" dy="0">Coordinate outage</tspan>
         <tspan x="0" dy="1.2em">announcement with</tspan>
         <tspan x="0" dy="1.2em">support and capture</tspan>

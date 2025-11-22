@@ -236,6 +236,7 @@ def diagramagic(svgpp_source: str) -> str:
             combined_bbox = _merge_bbox(combined_bbox, bbox)
 
     _apply_root_bounds(root, svg_root, combined_bbox)
+    _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
 
@@ -694,6 +695,53 @@ def _apply_root_bounds(
     )
     _ensure_dimension(svg_root, "width", width_needed, src_root.get("width"))
     _ensure_dimension(svg_root, "height", height_needed, src_root.get("height"))
+
+
+def _apply_background_rect(
+    src_root: ET.Element, svg_root: ET.Element, diag_ns: str
+) -> None:
+    raw_value = src_root.get(_qual(diag_ns, "background"))
+    color = raw_value.strip() if raw_value else "#fff"
+    if not color:
+        color = "#fff"
+    if color.lower() in {"none", "transparent"}:
+        return
+
+    min_x = 0.0
+    min_y = 0.0
+    width: Optional[float] = None
+    height: Optional[float] = None
+
+    view_box = svg_root.get("viewBox")
+    if view_box:
+        parts = re.split(r"[ ,]+", view_box.strip())
+        if len(parts) >= 4:
+            try:
+                min_x = float(parts[0])
+                min_y = float(parts[1])
+                width = float(parts[2])
+                height = float(parts[3])
+            except ValueError:
+                width = None
+                height = None
+
+    if width is None or height is None:
+        width = _parse_length(svg_root.get("width"), None)
+        height = _parse_length(svg_root.get("height"), None)
+        min_x = 0.0
+        min_y = 0.0
+
+    if width is None or height is None:
+        return
+
+    rect_attrs = {
+        "x": _fmt(min_x),
+        "y": _fmt(min_y),
+        "width": _fmt(width),
+        "height": _fmt(height),
+        "fill": color,
+    }
+    svg_root.insert(0, ET.Element(_q("rect"), rect_attrs))
 
 
 def _ensure_dimension(
