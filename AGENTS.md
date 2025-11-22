@@ -44,7 +44,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | Attribute | Required? | Default | Units | Notes |
 |-----------|-----------|---------|-------|-------|
 | **diag:flex** | | | | |
-| `x`, `y` | Yes | — | pixels | Absolute position in SVG coordinate space |
+| `x`, `y` | For top-level | `0` | pixels | Absolute position for top-level flex; omit for nested flex (parent handles layout) |
 | `width` | No | auto | pixels | Auto = sum of child widths (row) or max child width (column) |
 | `direction` | No | `"column"` | — | `"column"` stacks vertically, `"row"` horizontally |
 | `gap` | No | `0` | pixels | Space between children along main axis |
@@ -63,8 +63,9 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 
 ## Positioning & Coordinates
 
-- **All `x` and `y` values are absolute** in SVG coordinate space (not relative to parent flex).
-- Calculate positions manually: if you place one flex at `y="20"` with `height="80"`, place the next one at `y="110"` (20 + 80 + 10 gap).
+- **Top-level flex elements** (direct children of `<diag:diagram>`): `x` and `y` specify **absolute position** in SVG coordinate space. Calculate positions manually: if you place one flex at `y="20"` with `height="80"`, place the next one at `y="110"` (20 + 80 + 10 gap).
+- **Nested flex elements** (children of other flex containers): **omit `x` and `y`** — the parent positions children automatically using its layout algorithm (column stacks vertically, row arranges horizontally with gap/padding).
+- SVG transforms compose naturally, so if you do specify `x`/`y` on a nested flex, it creates an offset relative to the parent's coordinate space (rarely needed).
 - The diagram auto-sizes to fit all content—`width`, `height`, and `viewBox` are calculated automatically from content bounds (you can override by setting them explicitly on `<diag:diagram>` if needed).
 - All numeric values are in **pixels** (SVG user units).
 
@@ -119,7 +120,9 @@ The second instance overrides `background-class`, so it gets a different style w
 
 **Stacked Cards (Vertical List):**
 ```xml
+<!-- Outer flex uses x/y for top-level positioning -->
 <diag:flex x="20" y="20" width="200" direction="column" gap="12">
+  <!-- Nested flex elements omit x/y - parent handles layout -->
   <diag:flex width="200" padding="10" background-class="card">
     <text diag:wrap="true">First item in the list</text>
   </diag:flex>
@@ -131,7 +134,9 @@ The second instance overrides `background-class`, so it gets a different style w
 
 **Horizontal Timeline (Row Layout):**
 ```xml
+<!-- Top-level row flex positions the timeline -->
 <diag:flex x="20" y="40" direction="row" gap="20">
+  <!-- Child flex elements auto-arranged horizontally by parent -->
   <diag:flex width="100" padding="8" direction="column" background-class="step">
     <text class="label">Step 1</text>
   </diag:flex>
@@ -158,8 +163,9 @@ The second instance overrides `background-class`, so it gets a different style w
 </diag:flex>
 ```
 
-**Multiple Separate Elements (Manual Positioning):**
+**Multiple Separate Elements (Top-Level Manual Positioning):**
 ```xml
+<!-- Top-level flex elements use absolute x/y positioning -->
 <!-- First element at top-left -->
 <diag:flex x="20" y="20" width="150" padding="10" background-class="box">
   <text>Box A</text>
