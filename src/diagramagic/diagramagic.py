@@ -9,6 +9,14 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 try:
+    from diagramagic._diagramagic_resvg import measure_svg as _measure_svg
+except Exception as exc:  # pragma: no cover - native dependency required
+    raise RuntimeError(
+        "diagramagic requires the bundled resvg extension; ensure Cargo is available "
+        "and reinstall the package."
+    ) from exc
+
+try:
     from PIL import ImageFont
 except ImportError:  # pragma: no cover - Pillow required via requirements
     ImageFont = None
@@ -213,6 +221,10 @@ def diagramagic(svgpp_source: str) -> str:
     if not diag_ns:
         raise ValueError("Input does not contain a diag namespace root element")
 
+    diag_font_paths = _collect_font_paths(root, diag_ns)
+    original_width = root.get("width")
+    original_height = root.get("height")
+
     templates = _collect_templates(root, diag_ns)
     if templates:
         _expand_instances_in_tree(root, diag_ns, templates)
@@ -221,7 +233,6 @@ def diagramagic(svgpp_source: str) -> str:
     _copy_svg_attributes(root, svg_root, diag_ns)
 
     root_font_family, root_font_path = _font_family_info(root, diag_ns)
-    combined_bbox: Optional[Tuple[float, float, float, float]] = None
     for child in root:
         rendered, _, _, bbox = _render_node(
             child,
@@ -232,10 +243,8 @@ def diagramagic(svgpp_source: str) -> str:
         )
         if rendered is not None:
             svg_root.append(rendered)
-        if bbox is not None:
-            combined_bbox = _merge_bbox(combined_bbox, bbox)
 
-    _apply_root_bounds(root, svg_root, combined_bbox)
+    _apply_resvg_bounds(svg_root, original_width, original_height, diag_font_paths)
     _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
@@ -697,6 +706,32 @@ def _apply_root_bounds(
     _ensure_dimension(svg_root, "height", height_needed, src_root.get("height"))
 
 
+def _apply_resvg_bounds(
+    svg_root: ET.Element,
+    original_width: Optional[str],
+    original_height: Optional[str],
+    font_paths: List[str],
+) -> None:
+    svg_text = ET.tostring(svg_root, encoding="unicode")
+    measurement = _measure_svg(svg_text, font_paths)
+    overall = measurement.get("overall")
+    if not overall:
+        return
+    left, top, right, bottom = overall
+    min_x = min(0.0, left)
+    min_y = min(0.0, top)
+    width_needed = max(right - min_x, 0.0)
+    height_needed = max(bottom - min_y, 0.0)
+    if width_needed == 0.0 and height_needed == 0.0:
+        return
+    svg_root.set(
+        "viewBox",
+        f"{_fmt(min_x)} {_fmt(min_y)} {_fmt(width_needed)} {_fmt(height_needed)}",
+    )
+    _ensure_dimension(svg_root, "width", width_needed, original_width)
+    _ensure_dimension(svg_root, "height", height_needed, original_height)
+
+
 def _apply_background_rect(
     src_root: ET.Element, svg_root: ET.Element, diag_ns: str
 ) -> None:
@@ -849,6 +884,15 @@ def _font_family_info(
     if family:
         family = _strip_quotes(family.strip())
     return family, diag_font_path
+
+
+def _collect_font_paths(node: ET.Element, diag_ns: str) -> List[str]:
+    paths: set[str] = set()
+    for elem in node.iter():
+        diag_font_path = elem.get(_qual(diag_ns, "font-path"))
+        if diag_font_path:
+            paths.add(str(Path(diag_font_path).expanduser()))
+    return sorted(paths)
 
 
 def _gather_text(node: ET.Element) -> str:

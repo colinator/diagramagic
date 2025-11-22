@@ -9,6 +9,7 @@ svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits p
 - CLI: `diagramagic input.svg++ > output.svg`
 - Tests/fixtures: `python tests/run_tests.py`
 - Library use: `from diagramagic import diagramagic` (module lives in `src/`).
+- Build notes: requires a Rust toolchain (Cargo) to compile the bundled resvg-based measurement extension for accurate bounding boxes.
 
 svg++ basics: wrap your document in `<diag:diagram>` with the `diag:` namespace, use `<diag:flex>` for layout, and `diag:wrap="true"` on `<text>` to wrap. Everything compiles to pure SVG 1.1.
 

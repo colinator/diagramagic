@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 180 116">
-  <rect x="0" y="0" width="180" height="116" fill="#fff" />
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="180" viewBox="0 0 180.625 116.625">
+  <rect x="0" y="0" width="180.625" height="116.625" fill="#fff" />
   <style>
     .card { fill: #f5f5f5; stroke: #333; stroke-width: 1.25; rx: 6; ry: 6; }
     .title { font-size: 16; font-weight: 600; }

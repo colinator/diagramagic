@@ -13,6 +13,8 @@ svg++ is a tiny, deterministic, XML-based language used to describe diagrams. It
 - **Human-editable**
 - **Machine-expandable** into plain, standards-compliant **SVG 1.1**
 
+Reference renderer note: the implementation uses resvg for measurement; building/running requires a Rust toolchain.
+
 The system operates strictly as:
 
 ```

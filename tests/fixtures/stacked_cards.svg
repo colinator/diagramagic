@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 379" width="300" height="379">
-  <rect x="0" y="0" width="300" height="379" fill="#fff" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.6 -0.6 301.2 380.2" width="301.2" height="380.2">
+  <rect x="-0.6" y="-0.6" width="301.2" height="380.2" fill="#fff" />
   <style>
     .board { fill: #fbfbfb; stroke: #d0d0d0; stroke-width: 1.2; }
     .card { fill: white; stroke: #7d8590; stroke-width: 1.1; rx: 8; ry: 8; }
