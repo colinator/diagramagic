@@ -1,6 +1,6 @@
 [project]
 name = "diagramagic"
-version = "0.1.2"
+version = "0.1.3"
 description = "svg++ reference renderer"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -19,4 +19,10 @@ build-backend = "maturin"
 python-source = "src"
 module-name = "diagramagic._diagramagic_resvg"
 bindings = "pyo3"
-include = ["src/diagramagic/data/AGENTS.md"]
+# NOTE: Keep src/diagramagic/data/*.md in sync with root copies before building!
+# These docs are bundled so pip users can access them via --cheatsheet, etc.
+include = [
+    "src/diagramagic/data/AGENTS.md",
+    "src/diagramagic/data/PROJECTSPEC.md",
+    "src/diagramagic/data/README.md",
+]

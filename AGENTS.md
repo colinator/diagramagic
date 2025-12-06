@@ -182,13 +182,55 @@ The second instance overrides `background-class`, so it gets a different style w
 </diag:flex>
 ```
 
+## Using the CLI tool
+
+**IMPORTANT: Common mistake to avoid!**
+
+When you pass a **file** as input, diagramagic automatically writes the output file. Do NOT redirect stdout with `>` unless you use `--stdout`.
+
+```bash
+# ✅ CORRECT - file input (auto-writes to tcp.svg)
+diagramagic tcp.svg++
+
+# ✅ CORRECT - explicit output with --stdout
+diagramagic tcp.svg++ --stdout > tcp.svg
+
+# ✅ CORRECT - stdin to stdout
+echo "<diag:diagram>...</diag:diagram>" | diagramagic > output.svg
+
+# ❌ WRONG - this can corrupt the output if you're not careful!
+diagramagic tcp.svg++ > tcp.svg
+# ^ Status messages mix with file output and can corrupt tcp.svg
+```
+
+**Three ways to use diagramagic:**
+
+1. **File input** (auto-generates output):
+   ```bash
+   diagramagic input.svg++
+   # → Writes to input.svg automatically
+   ```
+
+2. **File input with --stdout** (for piping):
+   ```bash
+   diagramagic input.svg++ --stdout > output.svg
+   # → Clean SVG to stdout, no status messages
+   ```
+
+3. **Stdin input** (must redirect output):
+   ```bash
+   diagramagic < input.svg++ > output.svg
+   # or
+   echo "<diag:diagram>...</diag:diagram>" | diagramagic > output.svg
+   ```
+
 ## Tips for agents
 
 - Always bind the `diag:` namespace: `xmlns:diag="https://example.com/diag"` (or whatever binding the renderer expects).
 - Use column flexes for stacked cards, row flexes for timelines or step lists.
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
-- For nested layouts without explicit widths, the parent’s available width is inherited automatically so wrapped text stays consistent.
+- For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
-- Need a quick conversion in a workflow? Run `diagramagic input.svg++ > output.svg` or `diagramagic --cheatsheet` for this reference.
+- For a quick reference, run `diagramagic --cheatsheet` to display this guide.
 
 For full semantics (grammar, examples, future extensions) see `PROJECTSPEC.md`.
