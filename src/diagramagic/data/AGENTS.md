@@ -198,9 +198,9 @@ diagramagic tcp.svg++ --stdout > tcp.svg
 # ✅ CORRECT - stdin to stdout
 echo "<diag:diagram>...</diag:diagram>" | diagramagic > output.svg
 
-# ❌ WRONG - this corrupts the output!
+# ❌ WRONG - this can corrupt the output if you're not careful!
 diagramagic tcp.svg++ > tcp.svg
-# ^ Status messages mix with file output and corrupt tcp.svg
+# ^ Status messages mix with file output and can corrupt tcp.svg
 ```
 
 **Three ways to use diagramagic:**
