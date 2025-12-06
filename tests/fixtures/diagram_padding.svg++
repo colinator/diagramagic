@@ -1,0 +1,16 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://example.com/diag"
+              diag:padding="20"
+              diag:background="#f0f0f0">
+  <style>
+    .box { fill: #3b82f6; stroke: #1e40af; stroke-width: 2; rx: 4; }
+    .label { font-size: 14px; font-weight: 600; fill: #1e293b; }
+  </style>
+
+  <diag:flex width="160" padding="12" gap="8" background-class="box">
+    <text class="label" diag:wrap="false">Padding Test</text>
+    <text style="font-size: 12px; fill: #475569;" diag:wrap="true">
+      This diagram has diag:padding="20" which adds 20px margin on all sides.
+    </text>
+  </diag:flex>
+</diag:diagram>

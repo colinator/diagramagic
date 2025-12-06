@@ -224,6 +224,10 @@ def diagramagic(svgpp_source: str) -> str:
     diag_font_paths = _collect_font_paths(root, diag_ns)
     original_width = root.get("width")
     original_height = root.get("height")
+    diagram_padding_str = root.get(_qual(diag_ns, "padding"))
+    diagram_padding = _parse_length(diagram_padding_str, 0.0)
+    if diagram_padding is None or diagram_padding < 0:
+        diagram_padding = 0.0
 
     templates = _collect_templates(root, diag_ns)
     if templates:
@@ -244,7 +248,7 @@ def diagramagic(svgpp_source: str) -> str:
         if rendered is not None:
             svg_root.append(rendered)
 
-    _apply_resvg_bounds(svg_root, original_width, original_height, diag_font_paths)
+    _apply_resvg_bounds(svg_root, original_width, original_height, diag_font_paths, diagram_padding)
     _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
@@ -711,6 +715,7 @@ def _apply_resvg_bounds(
     original_width: Optional[str],
     original_height: Optional[str],
     font_paths: List[str],
+    diagram_padding: float = 0.0,
 ) -> None:
     svg_text = ET.tostring(svg_root, encoding="unicode")
     measurement = _measure_svg(svg_text, font_paths)
@@ -722,6 +727,11 @@ def _apply_resvg_bounds(
     min_y = min(0.0, top)
     width_needed = max(right - min_x, 0.0)
     height_needed = max(bottom - min_y, 0.0)
+    if diagram_padding > 0:
+        min_x -= diagram_padding
+        min_y -= diagram_padding
+        width_needed += 2 * diagram_padding
+        height_needed += 2 * diagram_padding
     if width_needed == 0.0 and height_needed == 0.0:
         return
     svg_root.set(

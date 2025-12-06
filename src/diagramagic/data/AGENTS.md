@@ -30,7 +30,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 
 ## Elements
 
-- `<diag:diagram>` — root container. Accepts normal `<svg>` attributes (`width`, `height`, `viewBox`, styles), but **all are optional**—the renderer auto-calculates size and viewBox from content bounds. Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent).
+- `<diag:diagram>` — root container. Accepts normal `<svg>` attributes (`width`, `height`, `viewBox`, styles), but **all are optional**—the renderer auto-calculates size and viewBox from content bounds. Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent). `diag:padding` adds symmetrical padding around content (defaults to 0).
 - `<diag:flex>` — column/row layout block.
   - Attributes: `x`, `y`, `width` (total width), `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
   - Children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
@@ -60,6 +60,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | `width`, `height` | No | auto | pixels | Auto-calculated from content bounds if omitted |
 | `viewBox` | No | auto | — | Auto-calculated from content bounds if omitted |
 | `diag:background` | No | `"white"` | — | Canvas background; use `"none"` for transparent |
+| `diag:padding` | No | `0` | pixels | Padding around auto-calculated content bounds |
 
 ## Positioning & Coordinates
 

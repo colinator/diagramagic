@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-21 -21 202 143" width="202" height="143">
+  <rect x="-21" y="-21" width="202" height="143" fill="#f0f0f0" />
+  <style>
+    .box { fill: #3b82f6; stroke: #1e40af; stroke-width: 2; rx: 4; }
+    .label { font-size: 14px; font-weight: 600; fill: #1e293b; }
+  </style>
+  <g transform="translate(0, 0)">
+    <rect x="0" y="0" width="160" height="101" class="box" />
+    <g transform="translate(12, 12)">
+      <text class="label" font-family="sans-serif" y="13">Padding Test</text>
+    </g>
+    <g transform="translate(12, 37)">
+      <text style="font-size: 12px; fill: #475569;" font-family="sans-serif" y="10">
+        <tspan x="0" dy="0">This diagram has</tspan>
+        <tspan x="0" dy="1.2em">diag:padding="20" which</tspan>
+        <tspan x="0" dy="1.2em">adds 20px margin on all</tspan>
+        <tspan x="0" dy="1.2em">sides.</tspan>
+      </text>
+    </g>
+  </g>
+</svg>

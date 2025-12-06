@@ -1,4 +1,4 @@
-# Build and Publish to PyPI (v0.1.3)
+# Build and Publish to PyPI (v0.1.4)
 
 ## Prerequisites
 - Python 3.9+
@@ -96,7 +96,7 @@ Or use GitHub Actions for automated multi-platform builds.
 
 ## Notes
 
-- **Version**: Set in `pyproject.toml` (currently 0.1.2)
+- **Version**: Set in `pyproject.toml` (currently 0.1.4)
 - **API Token**: Get from https://pypi.org/manage/account/token/
   - Use: `twine upload --username __token__ --password pypi-...`
 - **TestPyPI**: Test before production
