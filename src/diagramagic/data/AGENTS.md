@@ -63,7 +63,8 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 
 ## Positioning & Coordinates
 
-- **Top-level flex elements** (direct children of `<diag:diagram>`): `x` and `y` specify **absolute position** in SVG coordinate space. Calculate positions manually: if you place one flex at `y="20"` with `height="80"`, place the next one at `y="110"` (20 + 80 + 10 gap).
+- **For vertical stacking: use nested column flex, NOT manual y-coordinates.** Flex containers auto-calculate their height based on content, so you can't predict where the next element should go. Wrap everything in a parent `<diag:flex direction="column" gap="16">` to let the layout engine handle spacing.
+- **Top-level flex elements** (direct children of `<diag:diagram>`): Only use `x` and `y` for side-by-side elements at known positions, never for vertical stacks.
 - **Nested flex elements** (children of other flex containers): **omit `x` and `y`** — the parent positions children automatically using its layout algorithm (column stacks vertically, row arranges horizontally with gap/padding).
 - SVG transforms compose naturally, so if you do specify `x`/`y` on a nested flex, it creates an offset relative to the parent's coordinate space (rarely needed).
 - The diagram auto-sizes to fit all content—`width`, `height`, and `viewBox` are calculated automatically from content bounds (you can override by setting them explicitly on `<diag:diagram>` if needed).
