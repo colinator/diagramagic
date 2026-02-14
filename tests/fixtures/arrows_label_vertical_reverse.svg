@@ -22,6 +22,8 @@
       <text class="title" font-family="sans-serif" y="13">Bottom Worker</text>
     </g>
   </g>
-  <line x1="225" y1="269.5" x2="225" y2="77.5" stroke="#1d4ed8" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
-  <text x="222.5" y="173.5" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(-90 222.5 173.5)">upstream sync</text>
+  <g>
+    <line x1="225" y1="269.5" x2="225" y2="77.5" stroke="#1d4ed8" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
+    <text x="222.5" y="173.5" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(-90 222.5 173.5)">upstream sync</text>
+  </g>
 </svg>

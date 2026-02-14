@@ -22,6 +22,8 @@
       <text class="title" font-family="sans-serif" y="13">Aggregator</text>
     </g>
   </g>
-  <line x1="418.65" y1="259.5" x2="151.35" y2="97.5" stroke="#15803d" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
-  <text x="286.296" y="176.362" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(31.218 286.296 176.362)">feedback loop</text>
+  <g>
+    <line x1="418.65" y1="259.5" x2="151.35" y2="97.5" stroke="#15803d" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
+    <text x="286.296" y="176.362" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(31.218 286.296 176.362)">feedback loop</text>
+  </g>
 </svg>

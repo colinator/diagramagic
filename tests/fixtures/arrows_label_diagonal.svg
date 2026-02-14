@@ -22,6 +22,8 @@
       <text class="title" font-family="sans-serif" y="13">Decoder</text>
     </g>
   </g>
-  <line x1="136.667" y1="77.5" x2="373.333" y2="219.5" stroke="#2563eb" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
-  <text x="256.286" y="146.356" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(30.964 256.286 146.356)">hyp forward</text>
+  <g>
+    <line x1="136.667" y1="77.5" x2="373.333" y2="219.5" stroke="#2563eb" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
+    <text x="256.286" y="146.356" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(30.964 256.286 146.356)">hyp forward</text>
+  </g>
 </svg>

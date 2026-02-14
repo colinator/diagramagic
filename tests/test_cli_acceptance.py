@@ -264,11 +264,11 @@ class CLIAcceptanceTests(unittest.TestCase):
         code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
         self.assertEqual(code, 0, err)
         root = ET.fromstring(out)
-        lines = root.findall("{http://www.w3.org/2000/svg}line")
+        lines = root.findall(".//{http://www.w3.org/2000/svg}line")
         self.assertEqual(len(lines), 1)
         self.assertEqual(lines[0].get("stroke"), "#E67E22")
         self.assertTrue((lines[0].get("marker-end") or "").startswith("url(#diag-arrow-default"))
-        labels = root.findall("{http://www.w3.org/2000/svg}text")
+        labels = root.findall(".//{http://www.w3.org/2000/svg}text")
         self.assertTrue(any((t.text or "").strip() == "queries" for t in labels))
 
     def test_arrow_edge_overrides_are_rejected(self) -> None:
@@ -299,7 +299,7 @@ class CLIAcceptanceTests(unittest.TestCase):
         code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
         self.assertEqual(code, 0, err)
         root = ET.fromstring(out)
-        line = root.find("{http://www.w3.org/2000/svg}line")
+        line = root.find(".//{http://www.w3.org/2000/svg}line")
         self.assertEqual(line.get("marker-end"), "url(#diag-arrow-default-1)")
         markers = [m.get("id") for m in root.findall(".//{http://www.w3.org/2000/svg}marker")]
         self.assertIn("diag-arrow-default", markers)
@@ -362,7 +362,7 @@ class CLIAcceptanceTests(unittest.TestCase):
         code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
         self.assertEqual(code, 0, err)
         root = ET.fromstring(out)
-        line = root.find("{http://www.w3.org/2000/svg}line")
+        line = root.find(".//{http://www.w3.org/2000/svg}line")
         self.assertIsNotNone(line)
         self.assertAlmostEqual(float(line.get("x1")), 100.5, delta=0.01)
         self.assertAlmostEqual(float(line.get("y1")), 50.0, delta=0.01)
@@ -381,7 +381,7 @@ class CLIAcceptanceTests(unittest.TestCase):
         code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
         self.assertEqual(code, 0, err)
         root = ET.fromstring(out)
-        labels = { (t.text or "").strip(): t for t in root.findall("{http://www.w3.org/2000/svg}text") if (t.text or "").strip() in {"L2R", "R2L"} }
+        labels = { (t.text or "").strip(): t for t in root.findall(".//{http://www.w3.org/2000/svg}text") if (t.text or "").strip() in {"L2R", "R2L"} }
         self.assertEqual(set(labels.keys()), {"L2R", "R2L"})
 
         # Label should be offset above the connecting line (line midpoint y is 40).
@@ -394,6 +394,36 @@ class CLIAcceptanceTests(unittest.TestCase):
             angle_str = transform[len("rotate("):].split(" ", 1)[0]
             angle = float(angle_str)
             self.assertLessEqual(abs(angle), 90.0)
+
+    def test_arrow_inside_transformed_group_uses_local_coords(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <g transform="scale(0.4)">
+    <rect id="a" x="325" y="215" width="120" height="45" fill="none" stroke="#111"/>
+    <rect id="b" x="325" y="290" width="120" height="45" fill="none" stroke="#111"/>
+    <diag:arrow from="a" to="b" stroke="#555" stroke-width="1.2"/>
+  </g>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+
+        groups = root.findall("{http://www.w3.org/2000/svg}g")
+        scaled = next((g for g in groups if g.get("transform") == "scale(0.4)"), None)
+        self.assertIsNotNone(scaled)
+
+        line = scaled.find(".//{http://www.w3.org/2000/svg}line")
+        self.assertIsNotNone(line)
+        self.assertEqual(line.get("stroke"), "#555")
+        self.assertEqual(line.get("stroke-width"), "1.2")
+        self.assertAlmostEqual(float(line.get("x1")), 385.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y1")), 260.5, delta=0.01)
+        self.assertAlmostEqual(float(line.get("x2")), 385.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y2")), 289.5, delta=0.01)
+
+        top_level_lines = [child for child in list(root) if child.tag == "{http://www.w3.org/2000/svg}line"]
+        self.assertEqual(top_level_lines, [])
 
 
 if __name__ == "__main__":

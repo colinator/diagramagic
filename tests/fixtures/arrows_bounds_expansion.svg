@@ -21,5 +21,7 @@
       <text class="title" font-family="sans-serif" y="13">Node 2</text>
     </g>
   </g>
-  <line x1="140.5" y1="36.5" x2="259.5" y2="36.5" stroke="#4338ca" stroke-width="26" marker-end="url(#diag-arrow-default)" />
+  <g>
+    <line x1="140.5" y1="36.5" x2="259.5" y2="36.5" stroke="#4338ca" stroke-width="26" marker-end="url(#diag-arrow-default)" />
+  </g>
 </svg>

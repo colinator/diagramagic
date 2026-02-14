@@ -51,6 +51,7 @@ class FocusNotFoundError(ValueError):
 class _ArrowSpec:
     from_id: str
     to_id: str
+    slot_id: str
     label: Optional[str]
     label_size: float
     label_fill: str
@@ -662,7 +663,17 @@ def _collect_templates_from_sources(
 
 def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
     arrows: List[_ArrowSpec] = []
-    for node in root.iter():
+    parent_by_node: Dict[ET.Element, ET.Element] = {}
+    for parent in root.iter():
+        for child in list(parent):
+            parent_by_node[child] = parent
+
+    arrow_nodes = [
+        node
+        for node in root.iter()
+        if _namespace_of(node.tag) == diag_ns and _local_name(node.tag) == "arrow"
+    ]
+    for index, node in enumerate(arrow_nodes):
         if _namespace_of(node.tag) != diag_ns or _local_name(node.tag) != "arrow":
             continue
 
@@ -695,16 +706,27 @@ def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
                 continue
             passthrough_attrs[key] = value
 
+        slot_id = f"diag-arrow-slot-{index}"
         arrows.append(
             _ArrowSpec(
                 from_id=from_id,
                 to_id=to_id,
+                slot_id=slot_id,
                 label=label,
                 label_size=label_size,
                 label_fill=label_fill,
                 passthrough_attrs=passthrough_attrs,
             )
         )
+        parent = parent_by_node.get(node)
+        if parent is not None:
+            replacement = ET.Element(_q("g"), {"data-diag-arrow-slot": slot_id})
+            children = list(parent)
+            insert_at = children.index(node)
+            parent.remove(node)
+            parent.insert(insert_at, replacement)
+        elif node is root:
+            raise ValueError("diag:arrow cannot be the document root element")
 
     return arrows
 
@@ -732,6 +754,14 @@ def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
         seen_ids[node_id] = seen_ids.get(node_id, 0) + 1
 
     default_marker_id: Optional[str] = None
+    parent_by_node: Dict[ET.Element, ET.Element] = {}
+    slot_nodes: Dict[str, ET.Element] = {}
+    for parent in svg_root.iter():
+        for child in list(parent):
+            parent_by_node[child] = parent
+        slot_id = parent.get("data-diag-arrow-slot")
+        if slot_id:
+            slot_nodes[slot_id] = parent
 
     for arrow in arrows:
         if seen_ids.get(arrow.from_id, 0) == 0:
@@ -751,12 +781,22 @@ def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
             raise ValueError(f'diag:arrow to="{arrow.to_id}" has no measurable bbox')
 
         p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+        target_container = slot_nodes.get(arrow.slot_id, svg_root)
+        local_from, local_to = p_from, p_to
+        if target_container is not svg_root:
+            ctm = _container_ctm(target_container, parent_by_node)
+            inv = _invert_affine(ctm)
+            if inv is not None:
+                local_from = _apply_affine(inv, p_from)
+                local_to = _apply_affine(inv, p_to)
+            else:
+                target_container = svg_root
 
         line_attrs = {
-            "x1": _fmt(p_from[0]),
-            "y1": _fmt(p_from[1]),
-            "x2": _fmt(p_to[0]),
-            "y2": _fmt(p_to[1]),
+            "x1": _fmt(local_from[0]),
+            "y1": _fmt(local_from[1]),
+            "x2": _fmt(local_to[0]),
+            "y2": _fmt(local_to[1]),
         }
         line_attrs.update(arrow.passthrough_attrs)
         line_attrs.setdefault("stroke", "#555")
@@ -768,10 +808,14 @@ def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
             line_attrs["marker-end"] = f"url(#{default_marker_id})"
 
         line = ET.Element(_q("line"), line_attrs)
-        svg_root.append(line)
+        target_container.append(line)
 
         if arrow.label:
-            _emit_arrow_label(svg_root, arrow, p_from, p_to)
+            _emit_arrow_label(target_container, arrow, local_from, local_to)
+
+    for node in slot_nodes.values():
+        if "data-diag-arrow-slot" in node.attrib:
+            del node.attrib["data-diag-arrow-slot"]
 
 
 def _ensure_default_arrow_marker(svg_root: ET.Element) -> str:
@@ -1058,6 +1102,115 @@ def _closest_points_on_segments(
     c1 = (x1 + sc * ux, y1 + sc * uy)
     c2 = (x3 + tc * vx, y3 + tc * vy)
     return c1, c2
+
+
+def _container_ctm(
+    node: ET.Element, parent_by_node: Dict[ET.Element, ET.Element]
+) -> Tuple[float, float, float, float, float, float]:
+    lineage: List[ET.Element] = []
+    cursor: Optional[ET.Element] = node
+    while cursor is not None:
+        lineage.append(cursor)
+        cursor = parent_by_node.get(cursor)
+    lineage.reverse()
+
+    m = _identity_affine()
+    for elem in lineage:
+        transform = elem.get("transform")
+        if not transform:
+            continue
+        m = _mul_affine(m, _parse_transform_affine(transform))
+    return m
+
+
+def _identity_affine() -> Tuple[float, float, float, float, float, float]:
+    return (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+
+
+def _mul_affine(
+    m1: Tuple[float, float, float, float, float, float],
+    m2: Tuple[float, float, float, float, float, float],
+) -> Tuple[float, float, float, float, float, float]:
+    # Composition m = m1 ∘ m2
+    a1, b1, c1, d1, e1, f1 = m1
+    a2, b2, c2, d2, e2, f2 = m2
+    return (
+        a1 * a2 + c1 * b2,
+        b1 * a2 + d1 * b2,
+        a1 * c2 + c1 * d2,
+        b1 * c2 + d1 * d2,
+        a1 * e2 + c1 * f2 + e1,
+        b1 * e2 + d1 * f2 + f1,
+    )
+
+
+def _apply_affine(
+    m: Tuple[float, float, float, float, float, float], p: Tuple[float, float]
+) -> Tuple[float, float]:
+    a, b, c, d, e, f = m
+    x, y = p
+    return (a * x + c * y + e, b * x + d * y + f)
+
+
+def _invert_affine(
+    m: Tuple[float, float, float, float, float, float]
+) -> Optional[Tuple[float, float, float, float, float, float]]:
+    a, b, c, d, e, f = m
+    det = a * d - b * c
+    if abs(det) < 1e-12:
+        return None
+    inv_det = 1.0 / det
+    ai = d * inv_det
+    bi = -b * inv_det
+    ci = -c * inv_det
+    di = a * inv_det
+    ei = -(ai * e + ci * f)
+    fi = -(bi * e + di * f)
+    return (ai, bi, ci, di, ei, fi)
+
+
+def _parse_transform_affine(
+    transform: str,
+) -> Tuple[float, float, float, float, float, float]:
+    m = _identity_affine()
+    for fn, arg_text in re.findall(r"([a-zA-Z]+)\s*\(([^)]*)\)", transform):
+        values = [
+            float(chunk)
+            for chunk in re.split(r"[,\s]+", arg_text.strip())
+            if chunk
+        ]
+        name = fn.lower()
+        if name == "matrix" and len(values) == 6:
+            t = (values[0], values[1], values[2], values[3], values[4], values[5])
+        elif name == "translate" and values:
+            tx = values[0]
+            ty = values[1] if len(values) > 1 else 0.0
+            t = (1.0, 0.0, 0.0, 1.0, tx, ty)
+        elif name == "scale" and values:
+            sx = values[0]
+            sy = values[1] if len(values) > 1 else sx
+            t = (sx, 0.0, 0.0, sy, 0.0, 0.0)
+        elif name == "rotate" and values:
+            angle = math.radians(values[0])
+            cos_v = math.cos(angle)
+            sin_v = math.sin(angle)
+            if len(values) >= 3:
+                cx = values[1]
+                cy = values[2]
+                t = _mul_affine(
+                    _mul_affine((1.0, 0.0, 0.0, 1.0, cx, cy), (cos_v, sin_v, -sin_v, cos_v, 0.0, 0.0)),
+                    (1.0, 0.0, 0.0, 1.0, -cx, -cy),
+                )
+            else:
+                t = (cos_v, sin_v, -sin_v, cos_v, 0.0, 0.0)
+        elif name == "skewx" and len(values) == 1:
+            t = (1.0, 0.0, math.tan(math.radians(values[0])), 1.0, 0.0, 0.0)
+        elif name == "skewy" and len(values) == 1:
+            t = (1.0, math.tan(math.radians(values[0])), 0.0, 1.0, 0.0, 0.0)
+        else:
+            continue
+        m = _mul_affine(m, t)
+    return m
 
 
 def _collect_templates(root: ET.Element, diag_ns: str) -> Dict[str, List[ET.Element]]:

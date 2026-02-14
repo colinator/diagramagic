@@ -21,5 +21,7 @@
       <text class="title" font-family="sans-serif" y="13">Service</text>
     </g>
   </g>
-  <line x1="170.5" y1="69.286" x2="299.5" y2="87.714" stroke="#2563eb" stroke-width="2" marker-end="url(#diag-arrow-default)" />
+  <g>
+    <line x1="170.5" y1="69.286" x2="299.5" y2="87.714" stroke="#2563eb" stroke-width="2" marker-end="url(#diag-arrow-default)" />
+  </g>
 </svg>
