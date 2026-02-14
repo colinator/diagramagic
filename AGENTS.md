@@ -193,16 +193,16 @@ When you pass a **file** as input, diagramagic automatically writes the output f
 
 ```bash
 # ✅ CORRECT - file input (auto-writes to tcp.svg)
-diagramagic tcp.svg++
+diagramagic compile tcp.svg++
 
 # ✅ CORRECT - explicit output with --stdout
-diagramagic tcp.svg++ --stdout > tcp.svg
+diagramagic compile tcp.svg++ --stdout > tcp.svg
 
 # ✅ CORRECT - stdin to stdout
-echo "<diag:diagram>...</diag:diagram>" | diagramagic > output.svg
+echo "<diag:diagram>...</diag:diagram>" | diagramagic compile > output.svg
 
 # ❌ WRONG - this can corrupt the output if you're not careful!
-diagramagic tcp.svg++ > tcp.svg
+diagramagic compile tcp.svg++ > tcp.svg
 # ^ Status messages mix with file output and can corrupt tcp.svg
 ```
 
@@ -210,21 +210,21 @@ diagramagic tcp.svg++ > tcp.svg
 
 1. **File input** (auto-generates output):
    ```bash
-   diagramagic input.svg++
+   diagramagic compile input.svg++
    # → Writes to input.svg automatically
    ```
 
 2. **File input with --stdout** (for piping):
    ```bash
-   diagramagic input.svg++ --stdout > output.svg
+   diagramagic compile input.svg++ --stdout > output.svg
    # → Clean SVG to stdout, no status messages
    ```
 
 3. **Stdin input** (must redirect output):
    ```bash
-   diagramagic < input.svg++ > output.svg
+   diagramagic compile < input.svg++ > output.svg
    # or
-   echo "<diag:diagram>...</diag:diagram>" | diagramagic > output.svg
+   echo "<diag:diagram>...</diag:diagram>" | diagramagic compile > output.svg
    ```
 
 ## Tips for agents
@@ -234,6 +234,6 @@ diagramagic tcp.svg++ > tcp.svg
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
 - For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
-- For a quick reference, run `diagramagic --cheatsheet` to display this guide.
+- For a quick reference, run `diagramagic cheatsheet` to display this guide.
 
 For full semantics (grammar, examples, future extensions) see `PROJECTSPEC.md`.

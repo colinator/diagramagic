@@ -16,6 +16,11 @@ except Exception as exc:  # pragma: no cover - native dependency required
         "and reinstall the package."
     ) from exc
 
+try:  # pragma: no cover - optional while native module is being upgraded
+    from diagramagic._diagramagic_resvg import render_svg as _render_svg
+except Exception:  # pragma: no cover - fallback path
+    _render_svg = None
+
 try:
     from PIL import ImageFont
 except ImportError:  # pragma: no cover - Pillow required via requirements
@@ -35,6 +40,10 @@ GENERIC_FONT_FALLBACKS = {
         "DejaVu Sans Mono",
     ],
 }
+
+
+class FocusNotFoundError(ValueError):
+    """Raised when a requested focus id does not exist in rendered SVG."""
 
 
 class _TextMeasurer:
@@ -208,14 +217,18 @@ def _q(tag: str) -> str:
     return f"{{{SVG_NS}}}{tag}"
 
 
-def diagramagic(svgpp_source: str) -> str:
+def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] = None) -> str:
     """Convert svg++ markup to plain SVG."""
     try:
         root = ET.fromstring(svgpp_source)
     except ET.ParseError as exc:
+        line, column = getattr(exc, "position", (None, None))
+        location = (
+            f" at line {line}, column {column}" if line is not None and column is not None else ""
+        )
         raise ValueError(
             "Failed to parse svg++ input. Ensure XML entities like &, <, > are escaped "
-            "(use &amp;, &lt;, &gt;)."
+            f"(use &amp;, &lt;, &gt;){location}"
         ) from exc
     diag_ns = _namespace_of(root.tag)
     if not diag_ns:
@@ -229,7 +242,10 @@ def diagramagic(svgpp_source: str) -> str:
     if diagram_padding is None or diagram_padding < 0:
         diagram_padding = 0.0
 
-    templates = _collect_templates(root, diag_ns)
+    templates = {}
+    if shared_template_sources:
+        templates.update(_collect_templates_from_sources(shared_template_sources, diag_ns))
+    templates.update(_collect_templates(root, diag_ns))
     if templates:
         _expand_instances_in_tree(root, diag_ns, templates)
 
@@ -252,6 +268,59 @@ def diagramagic(svgpp_source: str) -> str:
     _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
+
+
+def render_png(
+    svg_text: str,
+    *,
+    scale: float = 1.0,
+    focus_id: Optional[str] = None,
+    padding: float = 20.0,
+    font_paths: Optional[List[str]] = None,
+) -> bytes:
+    render_input = svg_text
+    if focus_id:
+        render_input = _apply_focus_crop(svg_text, focus_id, padding)
+    return bytes(_render_svg(render_input, scale, font_paths or []))
+
+
+def _apply_focus_crop(svg_text: str, focus_id: str, padding: float) -> str:
+    root = ET.fromstring(svg_text)
+    measurement = _measure_svg(svg_text, [])
+    nodes = measurement.get("nodes") or []
+
+    matched_bbox: Optional[Tuple[float, float, float, float]] = None
+    element_exists = False
+    for node in root.iter():
+        if node.get("id") == focus_id:
+            element_exists = True
+            break
+
+    for node in nodes:
+        if node.get("id") == focus_id:
+            bbox = node.get("bbox")
+            if bbox and len(bbox) == 4:
+                matched_bbox = (bbox[0], bbox[1], bbox[2], bbox[3])
+                break
+
+    if not element_exists:
+        raise FocusNotFoundError(f'focus id "{focus_id}" not found')
+
+    if matched_bbox is None:
+        # Exists but has no measurable bbox (e.g. display:none). Rendering still succeeds.
+        return svg_text
+
+    left, top, right, bottom = matched_bbox
+    pad = max(padding, 0.0)
+    view_x = left - pad
+    view_y = top - pad
+    view_w = max((right - left) + 2 * pad, 1.0)
+    view_h = max((bottom - top) + 2 * pad, 1.0)
+
+    root.set("viewBox", f"{_fmt(view_x)} {_fmt(view_y)} {_fmt(view_w)} {_fmt(view_h)}")
+    root.set("width", _fmt(view_w))
+    root.set("height", _fmt(view_h))
+    return ET.tostring(root, encoding="unicode")
 
 
 def _render_node(
@@ -299,7 +368,7 @@ def _render_node(
         inherited_family,
         inherited_path,
     )
-    width, height, bbox = _measure_generic(node)
+    width, height, bbox = _measure_rendered_node(rendered)
     return rendered, width, height, bbox
 
 
@@ -542,38 +611,29 @@ def _text_bbox(
     return x, top, x + width, top + height
 
 
-def _measure_generic(
-    node: ET.Element,
+def _measure_rendered_node(
+    rendered: ET.Element,
 ) -> Tuple[float, float, Optional[Tuple[float, float, float, float]]]:
-    local = _local_name(node.tag)
-    if local == "rect":
-        width = _parse_length(node.get("width"), 0.0)
-        height = _parse_length(node.get("height"), 0.0)
-        x = _parse_length(node.get("x"), 0.0) or 0.0
-        y = _parse_length(node.get("y"), 0.0) or 0.0
-        return width, height, (x, y, x + width, y + height)
-    if local == "circle":
-        r = _parse_length(node.get("r"), 0.0)
-        cx = _parse_length(node.get("cx"), 0.0) or 0.0
-        cy = _parse_length(node.get("cy"), 0.0) or 0.0
-        return 2 * r, 2 * r, (cx - r, cy - r, cx + r, cy + r)
-    if local == "ellipse":
-        rx = _parse_length(node.get("rx"), 0.0)
-        ry = _parse_length(node.get("ry"), 0.0)
-        cx = _parse_length(node.get("cx"), 0.0) or 0.0
-        cy = _parse_length(node.get("cy"), 0.0) or 0.0
-        return 2 * rx, 2 * ry, (cx - rx, cy - ry, cx + rx, cy + ry)
-    if local == "line":
-        x1 = _parse_length(node.get("x1"), 0.0)
-        x2 = _parse_length(node.get("x2"), 0.0)
-        y1 = _parse_length(node.get("y1"), 0.0)
-        y2 = _parse_length(node.get("y2"), 0.0)
-        min_x = min(x1, x2)
-        max_x = max(x1, x2)
-        min_y = min(y1, y2)
-        max_y = max(y1, y2)
-        return abs(x2 - x1), abs(y2 - y1), (min_x, min_y, max_x, max_y)
-    return 0.0, 0.0, None
+    scratch_svg = ET.Element(_q("svg"))
+    scratch_svg.append(deepcopy(rendered))
+    measurement = _measure_svg(ET.tostring(scratch_svg, encoding="unicode"), [])
+    overall = measurement.get("overall")
+    if not overall:
+        return 0.0, 0.0, None
+    left, top, right, bottom = overall
+    return right - left, bottom - top, (left, top, right, bottom)
+
+
+def _collect_templates_from_sources(
+    template_sources: List[str], diag_ns: str
+) -> Dict[str, List[ET.Element]]:
+    templates: Dict[str, List[ET.Element]] = {}
+    for source in template_sources:
+        parsed = ET.fromstring(source)
+        if _namespace_of(parsed.tag) != diag_ns or _local_name(parsed.tag) != "diagram":
+            raise ValueError("Template source must use the same diag namespace and <diag:diagram> root")
+        templates.update(_collect_templates(parsed, diag_ns))
+    return templates
 
 
 def _collect_templates(root: ET.Element, diag_ns: str) -> Dict[str, List[ET.Element]]:
@@ -980,4 +1040,4 @@ def _qual(ns: str, local: str) -> str:
     return f"{{{ns}}}{local}"
 
 
-__all__ = ["diagramagic"]
+__all__ = ["diagramagic", "render_png", "FocusNotFoundError"]

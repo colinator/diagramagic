@@ -22,9 +22,10 @@ Installation typically takes 30-60 seconds while the Rust extension compiles.
 
 ## Quick Start
 
-- **CLI**: `diagramagic input.svg++ > output.svg`
+- **Compile**: `diagramagic compile input.svg++`
+- **Render PNG**: `diagramagic render input.svg++`
 - **Library**: `from diagramagic import diagramagic`
-- **Cheat sheet**: `diagramagic --cheatsheet` (or see `AGENTS.md`)
+- **Cheat sheet**: `diagramagic cheatsheet` (or see `AGENTS.md`)
 - **Full spec**: `PROJECTSPEC.md`
 - **Tests**: `python tests/run_tests.py`
 

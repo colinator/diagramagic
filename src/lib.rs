@@ -1,6 +1,8 @@
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
+use pyo3::types::PyBytes;
 use pyo3::types::{PyDict, PyList};
+use resvg::tiny_skia;
 use resvg::usvg;
 use usvg::NodeExt;
 use usvg_text_layout::{fontdb, TreeTextToPath};
@@ -46,9 +48,24 @@ fn version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+#[pyfunction]
+#[pyo3(signature = (svg_text, scale=1.0, font_paths=None))]
+fn render_svg<'py>(
+    py: Python<'py>,
+    svg_text: &str,
+    scale: f32,
+    font_paths: Option<Vec<String>>,
+) -> PyResult<&'py PyBytes> {
+    let png = render_internal(svg_text, scale, font_paths).map_err(|e| {
+        PyValueError::new_err(e.to_string())
+    })?;
+    Ok(PyBytes::new(py, &png))
+}
+
 #[pymodule]
 fn _diagramagic_resvg(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(measure_svg, m)?)?;
+    m.add_function(wrap_pyfunction!(render_svg, m)?)?;
     m.add_function(wrap_pyfunction!(version, m)?)?;
     Ok(())
 }
@@ -98,6 +115,14 @@ struct NodeInfo {
 enum MeasureError {
     #[error("failed to parse SVG: {0}")]
     Parse(String),
+    #[error("invalid scale: {0} (must be > 0)")]
+    InvalidScale(f32),
+    #[error("unable to compute render size from SVG")]
+    MissingSize,
+    #[error("failed to allocate raster surface")]
+    SurfaceAlloc,
+    #[error("failed to encode PNG")]
+    EncodePng,
 }
 
 fn measure_internal(
@@ -153,4 +178,50 @@ fn measure_internal(
         overall_bbox: overall,
         nodes,
     })
+}
+
+fn render_internal(
+    svg_text: &str,
+    scale: f32,
+    font_paths: Option<Vec<String>>,
+) -> Result<Vec<u8>, MeasureError> {
+    if scale <= 0.0 {
+        return Err(MeasureError::InvalidScale(scale));
+    }
+
+    let opt = usvg::Options::default();
+    let mut db = fontdb::Database::new();
+    db.load_system_fonts();
+    if let Some(paths) = font_paths {
+        for path in paths {
+            if let Err(err) = db.load_font_file(&path) {
+                eprintln!("warning: failed to load font {}: {}", path, err);
+            }
+        }
+    }
+
+    let mut rtree = usvg::Tree::from_data(svg_text.as_bytes(), &opt).map_err(|e| {
+        MeasureError::Parse(format!("{:?}", e))
+    })?;
+    rtree.convert_text(&db);
+
+    let fit_to = usvg::FitTo::Zoom(scale);
+    let pixmap_size = fit_to
+        .fit_to(rtree.size.to_screen_size())
+        .ok_or(MeasureError::MissingSize)?;
+
+    let mut pixmap = tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height())
+        .ok_or(MeasureError::SurfaceAlloc)?;
+
+    let rendered = resvg::render(
+        &rtree,
+        fit_to,
+        tiny_skia::Transform::default(),
+        pixmap.as_mut(),
+    );
+    if rendered.is_none() {
+        return Err(MeasureError::MissingSize);
+    }
+
+    pixmap.encode_png().map_err(|_| MeasureError::EncodePng)
 }

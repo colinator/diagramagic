@@ -1,10 +1,10 @@
-# Build and Publish to PyPI (v0.1.4)
+# Build and Publish to PyPI
 
 ## Prerequisites
 - Python 3.9+
 - Rust toolchain (rustc + cargo)
 - Virtual environment activated
-- `pip install -r dev-requirements.txt` (includes maturin, twine, Pillow)
+- `pip install -e .[dev]` (or `pip install -r dev-requirements.txt`)
 
 ---
 
@@ -96,7 +96,7 @@ Or use GitHub Actions for automated multi-platform builds.
 
 ## Notes
 
-- **Version**: Set in `pyproject.toml` (currently 0.1.4)
+- **Version**: Set in `pyproject.toml` (and keep `Cargo.toml` aligned)
 - **API Token**: Get from https://pypi.org/manage/account/token/
   - Use: `twine upload --username __token__ --password pypi-...`
 - **TestPyPI**: Test before production
@@ -104,6 +104,8 @@ Or use GitHub Actions for automated multi-platform builds.
   - `pip install --index-url https://test.pypi.org/simple/ diagramagic`
 - **Verify**: After upload, test in fresh environment:
   ```bash
-  pip install diagramagic==0.1.3
-  diagramagic --cheatsheet
+  pip install diagramagic==<new-version>
+  diagramagic cheatsheet
+  diagramagic patterns
+  diagramagic prompt
   ```
