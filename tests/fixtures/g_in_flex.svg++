@@ -1,0 +1,19 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .panel { fill:#f8fafc; stroke:#334155; stroke-width:1; }
+    .title { font-size:14px; font-weight:bold; fill:#0f172a; }
+    .body { font-size:12px; fill:#334155; }
+  </style>
+
+  <diag:flex x="24" y="24" width="320" direction="column" gap="10" padding="12" background-class="panel">
+    <text class="title">Group In Flex</text>
+    <g transform="scale(0.5)">
+      <diag:flex width="560" direction="column" gap="6" padding="10" background-class="panel">
+        <text class="body">Nested content inside transformed group.</text>
+        <text class="body" diag:wrap="true">The parent flex should measure this group and grow naturally without a spacer rectangle.</text>
+      </diag:flex>
+    </g>
+    <text class="body">Footer after group</text>
+  </diag:flex>
+</diag:diagram>

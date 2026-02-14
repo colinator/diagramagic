@@ -1,0 +1,15 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://example.com/diag">
+  <style>
+    .box { fill:#fef3c7; stroke:#92400e; stroke-width:1; }
+    .title { font-size:14px; font-weight:bold; fill:#78350f; }
+    .body { font-size:12px; fill:#92400e; }
+  </style>
+
+  <diag:flex x="20" y="20" width="280" direction="column" gap="8" padding="12" background-class="box">
+    <text class="title">Alternate Namespace URI</text>
+    <text class="body" diag:wrap="true">
+      This fixture intentionally uses https://example.com/diag to verify namespace-URI agnostic parsing.
+    </text>
+  </diag:flex>
+</diag:diagram>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280.5 176.5" width="280.5" height="176.5">
+  <rect x="0" y="0" width="280.5" height="176.5" fill="#fff" />
+  <style>
+    .board { fill:#f8fafc; stroke:#1f2937; stroke-width:1; }
+    .local { fill:#dbeafe; stroke:#1d4ed8; stroke-width:1; }
+    .title { font-size:14px; font-weight:bold; }
+    .body { font-size:12px; }
+  </style>
+  <g transform="translate(20, 20)">
+    <rect x="0" y="0" width="260" height="156" class="board" />
+    <g transform="translate(10, 10)">
+      <text class="title" font-family="sans-serif" y="13">Local Template Override</text>
+    </g>
+    <g transform="translate(10, 35)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="111" class="local" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="13">Card A</text>
+        </g>
+        <g transform="translate(10, 33)">
+          <text class="body" font-family="sans-serif" y="13">
+            <tspan x="0" dy="0">This fixture visually</tspan>
+            <tspan x="0" dy="1.2em">confirms local template</tspan>
+            <tspan x="0" dy="1.2em">definitions render as</tspan>
+            <tspan x="0" dy="1.2em">expected.</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

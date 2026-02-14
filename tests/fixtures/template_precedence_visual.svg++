@@ -1,0 +1,24 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .board { fill:#f8fafc; stroke:#1f2937; stroke-width:1; }
+    .local { fill:#dbeafe; stroke:#1d4ed8; stroke-width:1; }
+    .title { font-size:14px; font-weight:bold; }
+    .body { font-size:12px; }
+  </style>
+
+  <diag:template name="card">
+    <diag:flex width="220" direction="column" gap="6" padding="10" background-class="local">
+      <text class="title"><diag:slot name="title"/></text>
+      <text class="body" diag:wrap="true"><diag:slot name="body"/></text>
+    </diag:flex>
+  </diag:template>
+
+  <diag:flex x="20" y="20" width="260" direction="column" gap="8" padding="10" background-class="board">
+    <text class="title">Local Template Override</text>
+    <diag:instance template="card">
+      <diag:param name="title">Card A</diag:param>
+      <diag:param name="body">This fixture visually confirms local template definitions render as expected.</diag:param>
+    </diag:instance>
+  </diag:flex>
+</diag:diagram>

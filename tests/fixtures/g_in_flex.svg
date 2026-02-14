@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 344.5 141" width="344.5" height="141">
+  <rect x="0" y="0" width="344.5" height="141" fill="#fff" />
+  <style>
+    .panel { fill:#f8fafc; stroke:#334155; stroke-width:1; }
+    .title { font-size:14px; font-weight:bold; fill:#0f172a; }
+    .body { font-size:12px; fill:#334155; }
+  </style>
+  <g transform="translate(24, 24)">
+    <rect x="0" y="0" width="320" height="116.5" class="panel" />
+    <g transform="translate(12, 12)">
+      <text class="title" font-family="sans-serif" y="13">Group In Flex</text>
+    </g>
+    <g transform="translate(12, 39)">
+      <g transform="scale(0.5)">
+        <g transform="translate(0, 0)">
+          <rect x="0" y="0" width="560" height="77" class="panel" />
+          <g transform="translate(10, 10)">
+            <text class="body" font-family="sans-serif" y="13">Nested content inside transformed group.</text>
+          </g>
+          <g transform="translate(10, 33)">
+            <text class="body" font-family="sans-serif" y="13">
+              <tspan x="0" dy="0">The parent flex should measure this group and grow naturally without a</tspan>
+              <tspan x="0" dy="1.2em">spacer rectangle.</tspan>
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+    <g transform="translate(12, 87.5)">
+      <text class="body" font-family="sans-serif" y="13">Footer after group</text>
+    </g>
+  </g>
+</svg>

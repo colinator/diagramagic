@@ -785,6 +785,7 @@ Use this checklist to track implementation progress. Check items only when compl
 - [x] 1i. Update user-facing docs to match v2 CLI (`README.md`, `AGENTS.md`, bundled `src/diagramagic/data/*` copies).
 - [x] 1j. Update PyPI release guide (`BUILDFORPYPI.md`) for current version and v2 CLI smoke checks.
 - [x] 1k. Align Rust crate version in `Cargo.toml` with package release versioning policy.
+- [x] 1l. Regenerate `tests/fixtures/*.svg` from current `*.svg++` inputs and add v2-specific visual fixtures where needed.
 - [ ] 2a. Implement MCP core ops: `create`, `render`, `export`.
 - [ ] 2b. Implement MCP `update` with the minimum error-handling contract.
 - [ ] 2c. Implement MCP shared template library: `define_template`, `list_templates`.
