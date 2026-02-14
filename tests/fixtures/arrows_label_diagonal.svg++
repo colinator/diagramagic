@@ -1,0 +1,10 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .cardA { fill:#ecfeff; stroke:#0e7490; stroke-width:1; }
+    .cardB { fill:#eef2ff; stroke:#4338ca; stroke-width:1; }
+    .title { font-size:13px; }
+  </style>
+  <diag:flex id="left" x="20" y="40" width="170" padding="10" background-class="cardA"><text class="title">Encoder</text></diag:flex>
+  <diag:flex id="right" x="320" y="220" width="170" padding="10" background-class="cardB"><text class="title">Decoder</text></diag:flex>
+  <diag:arrow from="left" to="right" label="hyp forward" stroke="#2563eb" stroke-width="1.8"/>
+</diag:diagram>

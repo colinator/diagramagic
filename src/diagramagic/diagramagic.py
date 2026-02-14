@@ -918,19 +918,38 @@ def _emit_arrow_label(
     p_from: Tuple[float, float],
     p_to: Tuple[float, float],
 ) -> None:
+    dx = p_to[0] - p_from[0]
+    dy = p_to[1] - p_from[1]
+    seg_len = max(math.hypot(dx, dy), 1e-9)
     mid_x = (p_from[0] + p_to[0]) / 2.0
     mid_y = (p_from[1] + p_to[1]) / 2.0
-    angle = math.degrees(math.atan2(p_to[1] - p_from[1], p_to[0] - p_from[0]))
+
+    # Pick the normal that points more upward in screen coordinates to keep labels off the line.
+    n1 = (dy / seg_len, -dx / seg_len)
+    n2 = (-dy / seg_len, dx / seg_len)
+    nx, ny = n1 if n1[1] <= n2[1] else n2
+    # Keep labels close to the line, but never directly on top of it.
+    # Baseline placement plus a small normal offset gives a cleaner, lighter gap.
+    label_offset = max(2.0, arrow.label_size * 0.25)
+    lx = mid_x + nx * label_offset
+    ly = mid_y + ny * label_offset
+
+    angle = math.degrees(math.atan2(dy, dx))
+    # Keep text orientation readable (never upside-down).
+    if angle > 90.0:
+        angle -= 180.0
+    elif angle < -90.0:
+        angle += 180.0
     attrs = {
-        "x": _fmt(mid_x),
-        "y": _fmt(mid_y),
+        "x": _fmt(lx),
+        "y": _fmt(ly),
         "text-anchor": "middle",
         "font-size": _fmt(arrow.label_size),
         "fill": arrow.label_fill,
-        "dominant-baseline": "middle",
+        "dominant-baseline": "alphabetic",
     }
     if abs(angle) >= 15.0:
-        attrs["transform"] = f"rotate({_fmt(angle)} {_fmt(mid_x)} {_fmt(mid_y)})"
+        attrs["transform"] = f"rotate({_fmt(angle)} {_fmt(lx)} {_fmt(ly)})"
     text = ET.Element(_q("text"), attrs)
     text.text = arrow.label
     svg_root.append(text)

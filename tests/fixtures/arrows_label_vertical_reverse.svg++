@@ -1,0 +1,10 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .cardA { fill:#eff6ff; stroke:#1d4ed8; stroke-width:1; }
+    .cardB { fill:#fff7ed; stroke:#c2410c; stroke-width:1; }
+    .title { font-size:13px; }
+  </style>
+  <diag:flex id="top" x="140" y="40" width="170" padding="10" background-class="cardA"><text class="title">Top Service</text></diag:flex>
+  <diag:flex id="bottom" x="140" y="270" width="170" padding="10" background-class="cardB"><text class="title">Bottom Worker</text></diag:flex>
+  <diag:arrow from="bottom" to="top" label="upstream sync" stroke="#1d4ed8" stroke-width="1.8"/>
+</diag:diagram>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="13.5 43.5 543 270" width="543" height="270">
+  <rect x="13.5" y="43.5" width="543" height="270" fill="#fff" />
+  <defs>
+    <marker id="diag-arrow-default" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+    </marker>
+  </defs>
+  <style>
+    .cardA { fill:#f0fdf4; stroke:#15803d; stroke-width:1; }
+    .cardB { fill:#fdf4ff; stroke:#a21caf; stroke-width:1; }
+    .title { font-size:13px; }
+  </style>
+  <g transform="translate(30, 60)" id="leftTop">
+    <rect x="0" y="0" width="180" height="37" class="cardA" />
+    <g transform="translate(10, 10)">
+      <text class="title" font-family="sans-serif" y="13">Extractor</text>
+    </g>
+  </g>
+  <g transform="translate(360, 260)" id="rightBottom">
+    <rect x="0" y="0" width="180" height="37" class="cardB" />
+    <g transform="translate(10, 10)">
+      <text class="title" font-family="sans-serif" y="13">Aggregator</text>
+    </g>
+  </g>
+  <line x1="418.65" y1="259.5" x2="151.35" y2="97.5" stroke="#15803d" stroke-width="1.8" marker-end="url(#diag-arrow-default)" />
+  <text x="286.296" y="176.362" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(31.218 286.296 176.362)">feedback loop</text>
+</svg>

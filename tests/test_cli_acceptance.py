@@ -369,6 +369,32 @@ class CLIAcceptanceTests(unittest.TestCase):
         self.assertAlmostEqual(float(line.get("x2")), 199.5, delta=0.01)
         self.assertAlmostEqual(float(line.get("y2")), 50.0, delta=0.01)
 
+    def test_arrow_label_is_offset_and_not_upside_down(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="a" x="20" y="20" width="120" height="40" fill="none" stroke="#111"/>
+  <rect id="b" x="260" y="20" width="120" height="40" fill="none" stroke="#111"/>
+  <diag:arrow from="a" to="b" label="L2R"/>
+  <diag:arrow from="b" to="a" label="R2L" stroke="#c2410c"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        labels = { (t.text or "").strip(): t for t in root.findall("{http://www.w3.org/2000/svg}text") if (t.text or "").strip() in {"L2R", "R2L"} }
+        self.assertEqual(set(labels.keys()), {"L2R", "R2L"})
+
+        # Label should be offset above the connecting line (line midpoint y is 40).
+        self.assertLess(float(labels["L2R"].get("y")), 40.0)
+        self.assertLess(float(labels["R2L"].get("y")), 40.0)
+
+        # Reversed arrow label should remain readable (no upside-down ~180deg rotation).
+        transform = labels["R2L"].get("transform", "")
+        if transform.startswith("rotate("):
+            angle_str = transform[len("rotate("):].split(" ", 1)[0]
+            angle = float(angle_str)
+            self.assertLessEqual(abs(angle), 90.0)
+
 
 if __name__ == "__main__":
     unittest.main()
