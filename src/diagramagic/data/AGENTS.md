@@ -10,7 +10,7 @@ svg++ is just SVG with a handful of extra `diag:` elements and attributes. Start
 
 ```xml
 <diag:diagram xmlns="http://www.w3.org/2000/svg"
-              xmlns:diag="https://example.com/diag">
+              xmlns:diag="https://diagramagic.ai/ns">
   <style>
     .card { fill:#f0f0f0; stroke:#333; stroke-width:1; }
     .title { font-size:14px; font-weight:bold; }
@@ -33,9 +33,12 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 - `<diag:diagram>` — root container. Accepts normal `<svg>` attributes (`width`, `height`, `viewBox`, styles), but **all are optional**—the renderer auto-calculates size and viewBox from content bounds. Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent). `diag:padding` adds symmetrical padding around content (defaults to 0).
 - `<diag:flex>` — column/row layout block.
 - `<diag:arrow>` — connector between two elements by `id`.
-  - Attributes: `x`, `y`, `width` (total width), `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
-  - Children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
-  - Width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
+  - Required attributes: `from`, `to` (element ids).
+  - Optional attributes: `label`, `label-size`, `label-fill`, standard SVG stroke/presentation attributes (`stroke`, `stroke-width`, `stroke-dasharray`, etc.), and optional `marker-end`/`marker-start`.
+  - Endpoints are chosen automatically via center-line intersection with each target bbox.
+- `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
+- `<diag:flex>` children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
+- `<diag:flex>` width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
 - `<text>` — standard SVG text. Use `diag:wrap="true"` to enable wrapping.
   - Optional attributes: `diag:max-width` (override wrapping width per text node), `diag:font-family`, `diag:font-path` (inherit like CSS).
   - **Important**: Always specify `font-size` via CSS (`style` attribute or `<style>` block) for proper text measurement.
@@ -52,6 +55,13 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | `padding` | No | `0` | pixels | Inner padding on all sides |
 | `background-class` | No | none | — | CSS class for auto-generated background `<rect>` |
 | `background-style` | No | none | — | Inline styles for background `<rect>` |
+| **diag:arrow** | | | | |
+| `from`, `to` | Yes | — | id string | Source/target element ids |
+| `label` | No | none | text | Optional text centered at arrow midpoint |
+| `label-size` | No | `10` | pixels | Label font size |
+| `label-fill` | No | `#555` | color | Label text color |
+| `marker-end`, `marker-start` | No | auto `marker-end` | marker URL | If omitted, default arrowhead is added to marker-end |
+| stroke/presentation attrs | No | SVG defaults | SVG units | Passed through to emitted `<line>` |
 | **text** | | | | |
 | `diag:wrap` | No | `"false"` | — | Set `"true"` to enable line wrapping |
 | `diag:max-width` | No | container width | pixels | Override wrap width for this text element |
@@ -130,6 +140,7 @@ Use arrows to connect rendered elements by id:
 
 - `from` / `to` must reference element `id` attributes in the final diagram.
 - Endpoints are selected automatically via center-line intersection with each element bbox.
+- Optional arrow attrs: `label`, `label-size`, `label-fill`, plus standard SVG stroke/presentation attrs.
 - If no marker attributes are specified, a default arrowhead is added to `marker-end`.
 
 ## Common Patterns
@@ -242,7 +253,7 @@ diagramagic compile tcp.svg++ > tcp.svg
 
 ## Tips for agents
 
-- Always bind the `diag:` namespace: `xmlns:diag="https://example.com/diag"` (or whatever binding the renderer expects).
+- Always bind the `diag:` namespace: `xmlns:diag="https://diagramagic.ai/ns"` (preferred).
 - Use column flexes for stacked cards, row flexes for timelines or step lists.
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
 - For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
