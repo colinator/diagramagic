@@ -244,180 +244,105 @@ Auto-sizes to fit content. No `width`, `height`, or `viewBox` needed on the root
 
 ---
 
-## Part 2: MCP Server
+### `diag:arrow`
 
-### Design Principles
+### Element
 
-- **svg++ is the authoring language.** The LLM writes SVG with `diag:` extensions. Its deep SVG knowledge transfers directly — svg++ just removes the pain points (text wrapping, box layout, templates).
-- **Document-level statefulness.** The tool holds named documents. No entity-level scene graph — the svg++ source *is* the state.
-- **Visual feedback loop.** The LLM can render at any time, see the result via multimodal vision, and correct course. This is the primary quality lever.
-- **Shared template library.** Common diagram components are available across all documents without re-definition.
+`<diag:arrow from="element-id" to="element-id"/>`
 
-### Operations
+Required attributes:
+- `from` — id of source element
+- `to` — id of target element
 
-#### `create`
+Optional attributes:
+- `label` — text centered on the midpoint of the emitted connection
+- `label-size` — font size for label (default: `10`)
+- `label-fill` — color for label (default: `#555`)
+- Any standard SVG presentation/stroke attributes (`stroke`, `stroke-width`, `stroke-dasharray`, etc.)
+- `marker-end`, `marker-start` — if omitted, default `marker-end` is injected
 
-Create or replace a named document.
+### Coordinate Space + Pass Order
 
-```json
-{
-  "op": "create",
-  "args": {
-    "name": "architecture",
-    "source": "<diag:diagram xmlns=...>...</diag:diagram>"
-  }
-}
-```
+- Arrow resolution uses **final compiled node bounding boxes** in output SVG coordinate space (after flex layout, template expansion, and transforms).
+- Compile order:
+1. Expand templates/instances
+2. Render/layout `diag:flex` + wrapped text + generic SVG
+3. Measure final SVG node bboxes
+4. Resolve and emit arrows (`<line>` + optional label `<text>`)
+5. Recompute overall bounds/viewBox so arrows contribute to canvas sizing
 
-Returns: `{ "status": "created", "name": "architecture" }`
+### Endpoint Semantics
 
-- `source` is svg++ markup (full `<diag:diagram>` document).
-- If a document with this name already exists, it is replaced.
-- Parses and validates the svg++ on creation; returns an error if malformed.
+`edge-center` vs `nearest point on edge`:
+- **Edge center** means the midpoint of a box side (e.g., exact middle of the left edge).
+- **Nearest point on edge** means any point along that side segment that minimizes distance to the opposing element.
 
-#### `render`
+Rules:
+- Use center-line intersection:
+  1. Compute a line from source bbox center to target bbox center.
+  2. Intersect that line with each bbox boundary.
+  3. Use those two intersection points as arrow start/end.
+- If center-line intersection is degenerate or unavailable (coincident centers, invalid/zero-size bbox), fall back to nearest-point edge selection with deterministic tie-breaker order: `right`, `left`, `bottom`, `top`, `center`.
 
-Render a document (or a region of it) to a PNG image.
+### Marker + Style Emission
 
-```json
-{
-  "op": "render",
-  "args": {
-    "name": "architecture",
-    "focus": "auth-subsystem",
-    "padding": 20
-  }
-}
-```
+- Emit a `<line>` by default (future routing may emit `<path>`).
+- Copy all non-`diag:` attributes from `<diag:arrow>` onto emitted `<line>`, excluding control attrs: `from`, `to`, `label`, `label-size`, `label-fill`.
+- If neither `marker-end` nor `marker-start` is provided, emit `marker-end="url(#diag-arrow-default)"`.
+- Ensure a single shared marker definition exists in document `<defs>`:
+  - id: `diag-arrow-default`
+  - simple triangular arrowhead
+  - deduplicated (create once per document)
+  - collision policy: if a non-arrow marker already uses `id="diag-arrow-default"`, emit the auto marker as `diag-arrow-default-1` and point generated arrows to that id
 
-Returns: PNG image of the rendered diagram.
+### Labels
 
-- `focus` (optional): an element `id` in the svg++. The viewport crops to that element's bounding box plus `padding`. Omit to render the full document.
-- `padding` (optional, default 20): extra space around the focused element in pixels.
-- Pipeline: svg++ → SVG (via diagramagic) → PNG (via rasterizer).
-- If `focus` is provided and no matching `id` exists, return an error.
-- Off-canvas, hidden, or very small focused elements are still valid: render the requested crop region; do not treat this as an error.
+- If `label` exists, emit `<text>` at line midpoint with `text-anchor="middle"`.
+- Rotation follows line angle unless nearly horizontal.
+- Nearly horizontal threshold: `abs(angle_degrees) < 15` -> keep horizontal.
+- No halo/background/label-wrapping in this iteration.
 
-#### `update`
+### Errors
 
-Replace a fragment of an existing document by element id.
+Return `E_SVGPP_SEMANTIC` for:
+- `from` id missing
+- `to` id missing
+- duplicate ids for either endpoint
+- presence of deprecated `from-edge`/`to-edge` attributes
+- endpoint exists but has no measurable bbox
 
-```json
-{
-  "op": "update",
-  "args": {
-    "name": "architecture",
-    "element_id": "hyplora-card",
-    "source": "<diag:flex id='hyplora-card' width='245' ...>...</diag:flex>"
-  }
-}
-```
+### Focus/ID Interaction
 
-Returns: `{ "status": "updated", "name": "architecture", "element_id": "hyplora-card" }`
+- Arrow-generated nodes are not auto-focus targets by id.
+- If input `<diag:arrow>` has an explicit `id`, that id is assigned to emitted `<line>`.
+- `render --focus` behavior is unchanged: it targets normal SVG ids present after compilation.
 
-- Finds the element with the given `id` in the stored document and replaces it with the provided svg++ fragment.
-- The replacement element should have the same `id`.
-- Returns an error if the id is not found.
-- Avoids re-emitting the entire document for small changes — critical for large diagrams.
+### LLM Gotcha
 
-#### `export`
+- `from`/`to` must reference stable element `id` attributes in the compiled diagram, not template names or descriptive labels.
 
-Retrieve the processed SVG or the raw svg++ source.
+### Output Example
 
-```json
-{
-  "op": "export",
-  "args": {
-    "name": "architecture",
-    "format": "svg"
-  }
-}
-```
-
-Returns: the SVG or svg++ source as a string.
-
-- `format`: `"svg"` (default) returns processed pure-SVG output. `"svgpp"` returns the stored svg++ source as-is.
-
-### Shared Template Library
-
-The MCP server maintains a library of named templates that are available to all documents without explicit `<diag:template>` definitions.
-
-#### `define_template`
-
-Add a template to the shared library.
-
-```json
-{
-  "op": "define_template",
-  "args": {
-    "name": "service-box",
-    "source": "<diag:flex width='180' padding='10' gap='4' direction='column' background-class='card'><text class='title'><diag:slot name='name'/></text><text class='desc' diag:wrap='true'><diag:slot name='description'/></text></diag:flex>"
-  }
-}
-```
-
-Returns: `{ "status": "defined", "template": "service-box" }`
-
-- Templates defined here are injected into every document before processing, as if they were `<diag:template>` elements at the top of the document.
-- Document-local templates with the same name take precedence (local override).
-- Templates persist for the lifetime of the MCP server session.
-- Calling `define_template` with an existing name replaces the previous shared template.
-
-#### `list_templates`
-
-List all templates in the shared library.
-
-```json
-{
-  "op": "list_templates",
-  "args": {}
-}
-```
-
-Returns: `{ "templates": ["service-box", "db-cylinder", "note-card"] }`
-
-### Document Model
-
-Each document is:
-- A **name** (string, chosen by the LLM)
-- The **svg++ source** (the latest version, incorporating any `update` calls)
-
-The svg++ source is the single source of truth. No separate metadata layer, no entity registry.
-
-#### Element IDs
-
-For `update` and `render` focus to work, elements need `id` attributes. This is standard SVG practice:
-
+Input:
 ```xml
-<diag:flex id="auth-card" width="245" ...>
-  ...
-</diag:flex>
+<diag:arrow from="auth" to="db" label="queries" stroke="#E67E22"/>
 ```
 
-IDs are the LLM's own bookkeeping — the tool doesn't auto-assign or manage them.
-
-### Workflow Example
-
-A typical session creating a large codebase diagram:
-
-```
- 1. LLM: define_template("service-box", ...)
- 2. LLM: define_template("db-node", ...)
- 3. LLM: create("codebase", svg++ with high-level module boxes using templates)
- 4. LLM: render("codebase")
- 5. LLM: [sees the image] "The API box overlaps the DB box, let me fix spacing"
- 6. LLM: update("codebase", element_id="api-section", adjusted fragment)
- 7. LLM: render("codebase")
- 8. LLM: [looks good] "Now let me add detail to the auth module"
- 9. LLM: update("codebase", element_id="auth-module", expanded fragment with internals)
-10. LLM: render("codebase", focus="auth-module")
-11. LLM: [checks detail view] "Done."
-12. LLM: export("codebase", format="svg") → user saves to file
+Output:
+```xml
+<line x1="245" y1="120" x2="450" y2="120" stroke="#E67E22" stroke-width="1"
+      marker-end="url(#diag-arrow-default)"/>
+<text x="347" y="114" text-anchor="middle" font-size="10" fill="#555">queries</text>
 ```
 
----
+### Not In Scope
 
-## Part 3: CLI
+- obstacle routing
+- curved connectors
+- custom anchor points beyond edges/center
+- label wrapping and decorative effects
+
+## Part 2: CLI
 
 The CLI is the primary interface for file-based workflows (including LLM agents using tool calls like `Write` + `Bash` + `Read`). The MCP server is a thin wrapper over the same functions.
 
@@ -677,6 +602,179 @@ Things we explicitly defer:
 
 ---
 
+## Part 3: MCP Server
+
+### Design Principles
+
+- **svg++ is the authoring language.** The LLM writes SVG with `diag:` extensions. Its deep SVG knowledge transfers directly — svg++ just removes the pain points (text wrapping, box layout, templates).
+- **Document-level statefulness.** The tool holds named documents. No entity-level scene graph — the svg++ source *is* the state.
+- **Visual feedback loop.** The LLM can render at any time, see the result via multimodal vision, and correct course. This is the primary quality lever.
+- **Shared template library.** Common diagram components are available across all documents without re-definition.
+
+### Operations
+
+#### `create`
+
+Create or replace a named document.
+
+```json
+{
+  "op": "create",
+  "args": {
+    "name": "architecture",
+    "source": "<diag:diagram xmlns=...>...</diag:diagram>"
+  }
+}
+```
+
+Returns: `{ "status": "created", "name": "architecture" }`
+
+- `source` is svg++ markup (full `<diag:diagram>` document).
+- If a document with this name already exists, it is replaced.
+- Parses and validates the svg++ on creation; returns an error if malformed.
+
+#### `render`
+
+Render a document (or a region of it) to a PNG image.
+
+```json
+{
+  "op": "render",
+  "args": {
+    "name": "architecture",
+    "focus": "auth-subsystem",
+    "padding": 20
+  }
+}
+```
+
+Returns: PNG image of the rendered diagram.
+
+- `focus` (optional): an element `id` in the svg++. The viewport crops to that element's bounding box plus `padding`. Omit to render the full document.
+- `padding` (optional, default 20): extra space around the focused element in pixels.
+- Pipeline: svg++ → SVG (via diagramagic) → PNG (via rasterizer).
+- If `focus` is provided and no matching `id` exists, return an error.
+- Off-canvas, hidden, or very small focused elements are still valid: render the requested crop region; do not treat this as an error.
+
+#### `update`
+
+Replace a fragment of an existing document by element id.
+
+```json
+{
+  "op": "update",
+  "args": {
+    "name": "architecture",
+    "element_id": "hyplora-card",
+    "source": "<diag:flex id='hyplora-card' width='245' ...>...</diag:flex>"
+  }
+}
+```
+
+Returns: `{ "status": "updated", "name": "architecture", "element_id": "hyplora-card" }`
+
+- Finds the element with the given `id` in the stored document and replaces it with the provided svg++ fragment.
+- The replacement element should have the same `id`.
+- Returns an error if the id is not found.
+- Avoids re-emitting the entire document for small changes — critical for large diagrams.
+
+#### `export`
+
+Retrieve the processed SVG or the raw svg++ source.
+
+```json
+{
+  "op": "export",
+  "args": {
+    "name": "architecture",
+    "format": "svg"
+  }
+}
+```
+
+Returns: the SVG or svg++ source as a string.
+
+- `format`: `"svg"` (default) returns processed pure-SVG output. `"svgpp"` returns the stored svg++ source as-is.
+
+### Shared Template Library
+
+The MCP server maintains a library of named templates that are available to all documents without explicit `<diag:template>` definitions.
+
+#### `define_template`
+
+Add a template to the shared library.
+
+```json
+{
+  "op": "define_template",
+  "args": {
+    "name": "service-box",
+    "source": "<diag:flex width='180' padding='10' gap='4' direction='column' background-class='card'><text class='title'><diag:slot name='name'/></text><text class='desc' diag:wrap='true'><diag:slot name='description'/></text></diag:flex>"
+  }
+}
+```
+
+Returns: `{ "status": "defined", "template": "service-box" }`
+
+- Templates defined here are injected into every document before processing, as if they were `<diag:template>` elements at the top of the document.
+- Document-local templates with the same name take precedence (local override).
+- Templates persist for the lifetime of the MCP server session.
+- Calling `define_template` with an existing name replaces the previous shared template.
+
+#### `list_templates`
+
+List all templates in the shared library.
+
+```json
+{
+  "op": "list_templates",
+  "args": {}
+}
+```
+
+Returns: `{ "templates": ["service-box", "db-cylinder", "note-card"] }`
+
+### Document Model
+
+Each document is:
+- A **name** (string, chosen by the LLM)
+- The **svg++ source** (the latest version, incorporating any `update` calls)
+
+The svg++ source is the single source of truth. No separate metadata layer, no entity registry.
+
+#### Element IDs
+
+For `update` and `render` focus to work, elements need `id` attributes. This is standard SVG practice:
+
+```xml
+<diag:flex id="auth-card" width="245" ...>
+  ...
+</diag:flex>
+```
+
+IDs are the LLM's own bookkeeping — the tool doesn't auto-assign or manage them.
+
+### Workflow Example
+
+A typical session creating a large codebase diagram:
+
+```
+ 1. LLM: define_template("service-box", ...)
+ 2. LLM: define_template("db-node", ...)
+ 3. LLM: create("codebase", svg++ with high-level module boxes using templates)
+ 4. LLM: render("codebase")
+ 5. LLM: [sees the image] "The API box overlaps the DB box, let me fix spacing"
+ 6. LLM: update("codebase", element_id="api-section", adjusted fragment)
+ 7. LLM: render("codebase")
+ 8. LLM: [looks good] "Now let me add detail to the auth module"
+ 9. LLM: update("codebase", element_id="auth-module", expanded fragment with internals)
+10. LLM: render("codebase", focus="auth-module")
+11. LLM: [checks detail view] "Done."
+12. LLM: export("codebase", format="svg") → user saves to file
+```
+
+---
+
 ## Implementation Plan
 
 ### Iteration 1: CLI foundation + LLM fluency
@@ -708,7 +806,7 @@ Key features:
 
 #### 1c. CLI subcommand structure
 
-Introduce subcommands: `compile`, `render`, `cheatsheet`, `patterns`, `prompt`. A subcommand is always required. See "CLI Interface Change" table in Part 3.
+Introduce subcommands: `compile`, `render`, `cheatsheet`, `patterns`, `prompt`. A subcommand is always required. See "CLI Interface Change" table in Part 2.
 
 #### 1d. Shared templates via `--templates` flag
 
@@ -745,17 +843,37 @@ Add automated tests for all Iteration 1 behavior:
 - Agent-friendly errors: text mode shape, JSON mode schema, stable error codes, exit-code mapping, debug traceback gating.
 - `<g>` bounding-box fix: nested groups and transforms affect parent flex sizing correctly; no spacer workaround needed.
 
-### Iteration 2: MCP server
+### Iteration 2: `diag:arrow`
+
+Add `diag:arrow` compilation on top of Iteration 1 output pipeline.
+
+#### 2a. Arrow parse + validation
+
+Parse `<diag:arrow>` and validate required attributes (`from`, `to`) and optional controls (`label-size`, `label-fill`), rejecting deprecated edge override attributes.
+
+#### 2b. Endpoint resolution
+
+Resolve endpoints from final compiled node bboxes (post-layout/post-transform), using nearest-point anchors on selected edges.
+
+#### 2c. Emission + defaults
+
+Emit `<line>` with non-`diag:` attribute pass-through, inject/dedupe default arrow marker when marker attrs are omitted, and emit optional label text with angle threshold.
+
+#### 2d. Error contract + tests
+
+Implement explicit `E_SVGPP_SEMANTIC` error cases for bad ids/bboxes/deprecated attrs and add acceptance tests for center-line endpoints, marker defaults/collision policy, labels, and arrow contribution to final `viewBox`/auto-size.
+
+### Iteration 3: MCP server
 
 Build the MCP server as a thin wrapper over the CLI/library functions from Iteration 1.
 
-#### 2a. Core operations: `create`, `render`, `export`
+#### 3a. Core operations: `create`, `render`, `export`
 
-Minimum viable MCP server. Document store (in-memory, name → svg++ source). `render` returns PNG via multimodal. `export` returns SVG or svg++ source string. The `--templates` equivalent is the shared template library (2c).
+Minimum viable MCP server. Document store (in-memory, name → svg++ source). `render` returns PNG via multimodal. `export` returns SVG or svg++ source string. The `--templates` equivalent is the shared template library (3c).
 
-#### 2b. `update` operation
+#### 3b. `update` operation
 
-Find-and-replace an XML subtree by element `id`. This is deceptively complex to implement correctly: requires parsing the svg++ as XML, locating the element, replacing the subtree while preserving namespace declarations, and re-serializing cleanly. Consider using an XML library with round-trip fidelity rather than string manipulation. Defer this if it blocks shipping 2a — the LLM can always `create` with the full updated source as a fallback.
+Find-and-replace an XML subtree by element `id`. This is deceptively complex to implement correctly: requires parsing the svg++ as XML, locating the element, replacing the subtree while preserving namespace declarations, and re-serializing cleanly. Consider using an XML library with round-trip fidelity rather than string manipulation. Defer this if it blocks shipping 3a — the LLM can always `create` with the full updated source as a fallback.
 
 Minimum error-handling contract for `update`:
 - Error when `element_id` is missing in the document.
@@ -763,7 +881,7 @@ Minimum error-handling contract for `update`:
 - Error when replacement root `id` differs from `element_id` (to prevent accidental id drift).
 - If duplicate ids exist, update the first document-order match in v1 and return a warning note; tighten later if needed.
 
-#### 2c. Shared template library: `define_template`, `list_templates`
+#### 3c. Shared template library: `define_template`, `list_templates`
 
 MCP equivalent of the CLI's `--templates` flag. Templates persist for the server session lifetime. Injected into every document before processing. Document-local templates override.
 
@@ -786,6 +904,15 @@ Use this checklist to track implementation progress. Check items only when compl
 - [x] 1j. Update PyPI release guide (`BUILDFORPYPI.md`) for current version and v2 CLI smoke checks.
 - [x] 1k. Align Rust crate version in `Cargo.toml` with package release versioning policy.
 - [x] 1l. Regenerate `tests/fixtures/*.svg` from current `*.svg++` inputs and add v2-specific visual fixtures where needed.
-- [ ] 2a. Implement MCP core ops: `create`, `render`, `export`.
-- [ ] 2b. Implement MCP `update` with the minimum error-handling contract.
-- [ ] 2c. Implement MCP shared template library: `define_template`, `list_templates`.
+- [x] 2a. Implement `<diag:arrow>` parsing and attribute validation (`from`, `to`, label attrs), rejecting deprecated edge overrides.
+- [x] 2b. Implement arrow endpoint resolution from final compiled node bboxes (post-layout/post-transform).
+- [x] 2c. Implement deterministic endpoint resolution (center-line intersection + nearest-point fallback).
+- [x] 2d. Emit arrow lines with non-`diag:` attribute pass-through and default marker injection/dedup in `<defs>`.
+- [x] 2e. Emit arrow labels with midpoint placement and angle rule (`abs(angle) < 15` => horizontal), no halo.
+- [x] 2f. Add arrow-specific semantic error handling and acceptance tests.
+- [x] 2g. Update LLM communication assets for arrows (`AGENTS.md` cheatsheet guidance, `diagramagic_patterns.md` arrow patterns, and `diagramagic prompt` arrow rules/examples).
+- [x] 2h. Add/refresh visual fixtures for arrows in `tests/fixtures` (center-line, vertical alignment, labels, marker collision, bounds expansion).
+- [x] 2i. Change auto endpoint resolution to center-line/bbox intersection (with nearest-point fallback) and update tests/fixtures for midpoint behavior.
+- [ ] 3a. Implement MCP core ops: `create`, `render`, `export`.
+- [ ] 3b. Implement MCP `update` with the minimum error-handling contract.
+- [ ] 3c. Implement MCP shared template library: `define_template`, `list_templates`.

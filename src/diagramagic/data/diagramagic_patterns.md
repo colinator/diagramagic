@@ -60,3 +60,16 @@
   <line x1="200" y1="50" x2="300" y2="50" stroke="#555" marker-end="url(#arrow)"/>
 </diag:diagram>
 ```
+
+## 6) diag:arrow between id targets
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex id="auth" x="20" y="40" width="180" padding="10" background-class="card">
+    <text style="font-size:14px">Auth</text>
+  </diag:flex>
+  <diag:flex id="db" x="320" y="40" width="180" padding="10" background-class="card">
+    <text style="font-size:14px">Database</text>
+  </diag:flex>
+  <diag:arrow from="auth" to="db" label="queries" stroke="#e67e22" stroke-width="1.5"/>
+</diag:diagram>
+```

@@ -1,0 +1,13 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .card { fill:#f8fafc; stroke:#334155; stroke-width:1; }
+    .title { font-size:13px; }
+  </style>
+  <diag:flex id="left" x="20" y="40" width="150" padding="10" background-class="card">
+    <text class="title">Client</text>
+  </diag:flex>
+  <diag:flex id="right" x="300" y="80" width="150" padding="10" background-class="card">
+    <text class="title">Service</text>
+  </diag:flex>
+  <diag:arrow from="left" to="right" stroke="#2563eb" stroke-width="2"/>
+</diag:diagram>

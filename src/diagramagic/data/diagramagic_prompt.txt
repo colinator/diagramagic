@@ -3,6 +3,8 @@ Start with a top-level column flex for page structure.
 Use nested row/column flex instead of manual y-coordinate math.
 Template repeated components (3+ uses) with diag:template/diag:instance.
 Use diag:wrap="true" for multi-word text blocks.
+Use stable id attributes on connected elements before adding diag:arrow.
+For diag:arrow, set from/to to element ids (not template names or labels).
 Use <g transform="..."> to move/scale groups.
 Mix raw SVG (lines, arrows, paths) with svg++ layout freely.
 Assign stable id attributes for focused render and targeted updates.

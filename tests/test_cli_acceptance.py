@@ -253,6 +253,122 @@ class CLIAcceptanceTests(unittest.TestCase):
             heights = [float(r.get("height", "0")) for r in rects]
             self.assertTrue(any(h > 110 for h in heights), heights)
 
+    def test_arrow_emits_line_and_label(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:flex id="b" x="260" y="20" width="120" padding="8"><text style="font-size:12px">B</text></diag:flex>
+  <diag:arrow from="a" to="b" label="queries" stroke="#E67E22"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        lines = root.findall("{http://www.w3.org/2000/svg}line")
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0].get("stroke"), "#E67E22")
+        self.assertTrue((lines[0].get("marker-end") or "").startswith("url(#diag-arrow-default"))
+        labels = root.findall("{http://www.w3.org/2000/svg}text")
+        self.assertTrue(any((t.text or "").strip() == "queries" for t in labels))
+
+    def test_arrow_edge_overrides_are_rejected(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="top" x="40" y="20" width="120" padding="8"><text style="font-size:12px">Top</text></diag:flex>
+  <diag:flex id="bottom" x="40" y="220" width="120" padding="8"><text style="font-size:12px">Bottom</text></diag:flex>
+  <diag:arrow from="top" to="bottom" from-edge="bottom" to-edge="top" label="down"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+    def test_arrow_marker_collision_policy(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <defs>
+    <marker id="diag-arrow-default" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#000"/>
+    </marker>
+  </defs>
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:flex id="b" x="260" y="20" width="120" padding="8"><text style="font-size:12px">B</text></diag:flex>
+  <diag:arrow from="a" to="b"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        line = root.find("{http://www.w3.org/2000/svg}line")
+        self.assertEqual(line.get("marker-end"), "url(#diag-arrow-default-1)")
+        markers = [m.get("id") for m in root.findall(".//{http://www.w3.org/2000/svg}marker")]
+        self.assertIn("diag-arrow-default", markers)
+        self.assertIn("diag-arrow-default-1", markers)
+
+    def test_arrow_semantic_errors(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:arrow from="missing" to="a"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+        bad_edge = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:flex id="b" x="260" y="20" width="120" padding="8"><text style="font-size:12px">B</text></diag:flex>
+  <diag:arrow from="a" to="b" from-edge="diagonal"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", bad_edge])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+    def test_arrow_contributes_to_bounds(self) -> None:
+        no_arrow = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:flex id="b" x="260" y="20" width="120" padding="8"><text style="font-size:12px">B</text></diag:flex>
+</diag:diagram>
+""".strip()
+        with_arrow = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="a" x="20" y="20" width="120" padding="8"><text style="font-size:12px">A</text></diag:flex>
+  <diag:flex id="b" x="260" y="20" width="120" padding="8"><text style="font-size:12px">B</text></diag:flex>
+  <diag:arrow from="a" to="b" stroke-width="24"/>
+</diag:diagram>
+""".strip()
+        code, out1, _png, err = self.run_cli(["compile", "--text", no_arrow, "--stdout"])
+        self.assertEqual(code, 0, err)
+        code, out2, _png, err = self.run_cli(["compile", "--text", with_arrow, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root1 = ET.fromstring(out1)
+        root2 = ET.fromstring(out2)
+        h1 = float(root1.get("height"))
+        h2 = float(root2.get("height"))
+        self.assertGreater(h2, h1)
+
+    def test_arrow_auto_uses_centerline_intersection(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="r1" x="0" y="0" width="100" height="100" fill="none" stroke="#111"/>
+  <rect id="r2" x="200" y="0" width="100" height="100" fill="none" stroke="#111"/>
+  <diag:arrow from="r1" to="r2" stroke="#111"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        line = root.find("{http://www.w3.org/2000/svg}line")
+        self.assertIsNotNone(line)
+        self.assertAlmostEqual(float(line.get("x1")), 100.5, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y1")), 50.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("x2")), 199.5, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y2")), 50.0, delta=0.01)
+
 
 if __name__ == "__main__":
     unittest.main()

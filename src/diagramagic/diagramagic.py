@@ -1,6 +1,7 @@
 """svg++ to SVG converter for the minimal spec in PROJECTSPEC.md."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 import math
 import re
 import xml.etree.ElementTree as ET
@@ -44,6 +45,16 @@ GENERIC_FONT_FALLBACKS = {
 
 class FocusNotFoundError(ValueError):
     """Raised when a requested focus id does not exist in rendered SVG."""
+
+
+@dataclass
+class _ArrowSpec:
+    from_id: str
+    to_id: str
+    label: Optional[str]
+    label_size: float
+    label_fill: str
+    passthrough_attrs: Dict[str, str]
 
 
 class _TextMeasurer:
@@ -248,6 +259,7 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
     templates.update(_collect_templates(root, diag_ns))
     if templates:
         _expand_instances_in_tree(root, diag_ns, templates)
+    arrow_specs = _collect_arrows(root, diag_ns)
 
     svg_root = ET.Element(_q("svg"))
     _copy_svg_attributes(root, svg_root, diag_ns)
@@ -263,6 +275,9 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
         )
         if rendered is not None:
             svg_root.append(rendered)
+
+    if arrow_specs:
+        _emit_arrows(svg_root, arrow_specs)
 
     _apply_resvg_bounds(svg_root, original_width, original_height, diag_font_paths, diagram_padding)
     _apply_background_rect(root, svg_root, diag_ns)
@@ -408,7 +423,16 @@ def _render_flex(
         if rendered is not None:
             child_entries.append((rendered, w, h))
 
-    g = ET.Element(_q("g"), {"transform": f"translate({_fmt(x)}, {_fmt(y)})"})
+    g_attrs = {"transform": f"translate({_fmt(x)}, {_fmt(y)})"}
+    consumed = {"x", "y", "width", "direction", "gap", "padding", "background-class", "background-style"}
+    for key, value in node.attrib.items():
+        if _namespace_of(key) == diag_ns:
+            continue
+        local_key = _local_name(key)
+        if local_key in consumed:
+            continue
+        g_attrs[local_key] = value
+    g = ET.Element(_q("g"), g_attrs)
 
     if direction == "row":
         width, height = _layout_row(
@@ -636,6 +660,387 @@ def _collect_templates_from_sources(
     return templates
 
 
+def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
+    arrows: List[_ArrowSpec] = []
+    for node in root.iter():
+        if _namespace_of(node.tag) != diag_ns or _local_name(node.tag) != "arrow":
+            continue
+
+        from_id = (node.get("from") or "").strip()
+        to_id = (node.get("to") or "").strip()
+        if not from_id:
+            raise ValueError("diag:arrow requires non-empty 'from' attribute")
+        if not to_id:
+            raise ValueError("diag:arrow requires non-empty 'to' attribute")
+
+        if node.get("from-edge") is not None or node.get("to-edge") is not None:
+            raise ValueError("diag:arrow no longer supports from-edge/to-edge; use automatic center-line routing")
+
+        label = node.get("label")
+        label_size = _parse_length(node.get("label-size"), 10.0) or 10.0
+        label_fill = node.get("label-fill") or "#555"
+
+        passthrough_attrs: Dict[str, str] = {}
+        control_attrs = {
+            "from",
+            "to",
+            "label",
+            "label-size",
+            "label-fill",
+        }
+        for key, value in node.attrib.items():
+            if _namespace_of(key) is not None:
+                continue
+            if key in control_attrs:
+                continue
+            passthrough_attrs[key] = value
+
+        arrows.append(
+            _ArrowSpec(
+                from_id=from_id,
+                to_id=to_id,
+                label=label,
+                label_size=label_size,
+                label_fill=label_fill,
+                passthrough_attrs=passthrough_attrs,
+            )
+        )
+
+    return arrows
+
+
+def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
+    svg_text = ET.tostring(svg_root, encoding="unicode")
+    measurement = _measure_svg(svg_text, [])
+    nodes = measurement.get("nodes") or []
+    bbox_by_id: Dict[str, Tuple[float, float, float, float]] = {}
+
+    for node in nodes:
+        node_id = node.get("id")
+        bbox = node.get("bbox")
+        if not node_id or not bbox:
+            continue
+        if node_id in bbox_by_id:
+            raise ValueError(f'duplicate id "{node_id}" found while resolving diag:arrow endpoints')
+        bbox_by_id[node_id] = (bbox[0], bbox[1], bbox[2], bbox[3])
+
+    seen_ids: Dict[str, int] = {}
+    for node in svg_root.iter():
+        node_id = node.get("id")
+        if not node_id:
+            continue
+        seen_ids[node_id] = seen_ids.get(node_id, 0) + 1
+
+    default_marker_id: Optional[str] = None
+
+    for arrow in arrows:
+        if seen_ids.get(arrow.from_id, 0) == 0:
+            raise ValueError(f'diag:arrow from="{arrow.from_id}" id not found')
+        if seen_ids.get(arrow.to_id, 0) == 0:
+            raise ValueError(f'diag:arrow to="{arrow.to_id}" id not found')
+        if seen_ids.get(arrow.from_id, 0) > 1:
+            raise ValueError(f'diag:arrow from="{arrow.from_id}" is duplicated')
+        if seen_ids.get(arrow.to_id, 0) > 1:
+            raise ValueError(f'diag:arrow to="{arrow.to_id}" is duplicated')
+
+        from_bbox = bbox_by_id.get(arrow.from_id)
+        to_bbox = bbox_by_id.get(arrow.to_id)
+        if from_bbox is None:
+            raise ValueError(f'diag:arrow from="{arrow.from_id}" has no measurable bbox')
+        if to_bbox is None:
+            raise ValueError(f'diag:arrow to="{arrow.to_id}" has no measurable bbox')
+
+        p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+
+        line_attrs = {
+            "x1": _fmt(p_from[0]),
+            "y1": _fmt(p_from[1]),
+            "x2": _fmt(p_to[0]),
+            "y2": _fmt(p_to[1]),
+        }
+        line_attrs.update(arrow.passthrough_attrs)
+        line_attrs.setdefault("stroke", "#555")
+        line_attrs.setdefault("stroke-width", "1")
+
+        if "marker-end" not in line_attrs and "marker-start" not in line_attrs:
+            if default_marker_id is None:
+                default_marker_id = _ensure_default_arrow_marker(svg_root)
+            line_attrs["marker-end"] = f"url(#{default_marker_id})"
+
+        line = ET.Element(_q("line"), line_attrs)
+        svg_root.append(line)
+
+        if arrow.label:
+            _emit_arrow_label(svg_root, arrow, p_from, p_to)
+
+
+def _ensure_default_arrow_marker(svg_root: ET.Element) -> str:
+    existing_ids = {node.get("id") for node in svg_root.iter() if node.get("id")}
+    marker_id = "diag-arrow-default"
+    if marker_id in existing_ids:
+        marker_id = "diag-arrow-default-1"
+        idx = 1
+        while marker_id in existing_ids:
+            idx += 1
+            marker_id = f"diag-arrow-default-{idx}"
+
+    defs = svg_root.find(_q("defs"))
+    if defs is None:
+        defs = ET.Element(_q("defs"))
+        svg_root.insert(0, defs)
+
+    marker = ET.Element(
+        _q("marker"),
+        {
+            "id": marker_id,
+            "viewBox": "0 0 10 10",
+            "refX": "9",
+            "refY": "5",
+            "markerWidth": "6",
+            "markerHeight": "6",
+            "orient": "auto",
+        },
+    )
+    ET.SubElement(marker, _q("path"), {"d": "M 0 0 L 10 5 L 0 10 z", "fill": "#555"})
+    defs.append(marker)
+    return marker_id
+
+
+def _resolve_arrow_points(
+    from_bbox: Tuple[float, float, float, float],
+    to_bbox: Tuple[float, float, float, float],
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    centerline = _resolve_arrow_points_centerline(from_bbox, to_bbox)
+    if centerline is not None:
+        return centerline
+
+    candidates = ["right", "left", "bottom", "top", "center"]
+    from_edges = candidates
+    to_edges = candidates
+
+    best: Optional[Tuple[float, int, Tuple[float, float], Tuple[float, float]]] = None
+    tie_break_order = {name: idx for idx, name in enumerate(candidates)}
+    for fe in from_edges:
+        for te in to_edges:
+            p1, p2 = _arrow_points_for_edges(from_bbox, to_bbox, fe, te)
+            dist = math.hypot(p2[0] - p1[0], p2[1] - p1[1])
+            tie = tie_break_order[fe] * 10 + tie_break_order[te]
+            if best is None or dist < best[0] - 1e-9 or (
+                math.isclose(dist, best[0], abs_tol=1e-9) and tie < best[1]
+            ):
+                best = (dist, tie, p1, p2)
+
+    assert best is not None
+    return best[2], best[3]
+
+
+def _resolve_arrow_points_centerline(
+    from_bbox: Tuple[float, float, float, float],
+    to_bbox: Tuple[float, float, float, float],
+) -> Optional[Tuple[Tuple[float, float], Tuple[float, float]]]:
+    c1 = _bbox_center(from_bbox)
+    c2 = _bbox_center(to_bbox)
+    if math.isclose(c1[0], c2[0], abs_tol=1e-9) and math.isclose(c1[1], c2[1], abs_tol=1e-9):
+        return None
+    p1 = _ray_rect_intersection(c1, c2, from_bbox)
+    p2 = _ray_rect_intersection(c2, c1, to_bbox)
+    if p1 is None or p2 is None:
+        return None
+    return p1, p2
+
+
+def _ray_rect_intersection(
+    origin: Tuple[float, float],
+    toward: Tuple[float, float],
+    bbox: Tuple[float, float, float, float],
+) -> Optional[Tuple[float, float]]:
+    ox, oy = origin
+    tx, ty = toward
+    dx = tx - ox
+    dy = ty - oy
+    if abs(dx) < 1e-12 and abs(dy) < 1e-12:
+        return None
+
+    left, top, right, bottom = bbox
+    candidates: List[Tuple[float, float, float]] = []
+
+    if abs(dx) > 1e-12:
+        for x in (left, right):
+            t = (x - ox) / dx
+            if t <= 1e-12:
+                continue
+            y = oy + t * dy
+            if top - 1e-9 <= y <= bottom + 1e-9:
+                candidates.append((t, x, y))
+
+    if abs(dy) > 1e-12:
+        for y in (top, bottom):
+            t = (y - oy) / dy
+            if t <= 1e-12:
+                continue
+            x = ox + t * dx
+            if left - 1e-9 <= x <= right + 1e-9:
+                candidates.append((t, x, y))
+
+    if not candidates:
+        return None
+
+    t, x, y = min(candidates, key=lambda item: item[0])
+    del t
+    return (x, y)
+
+
+def _arrow_points_for_edges(
+    from_bbox: Tuple[float, float, float, float],
+    to_bbox: Tuple[float, float, float, float],
+    from_edge: str,
+    to_edge: str,
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    if from_edge == "center" and to_edge == "center":
+        return _bbox_center(from_bbox), _bbox_center(to_bbox)
+    if from_edge == "center":
+        p1 = _bbox_center(from_bbox)
+        p2 = _nearest_point_on_edge(to_bbox, to_edge, p1)
+        return p1, p2
+    if to_edge == "center":
+        p2 = _bbox_center(to_bbox)
+        p1 = _nearest_point_on_edge(from_bbox, from_edge, p2)
+        return p1, p2
+
+    seg1 = _edge_segment(from_bbox, from_edge)
+    seg2 = _edge_segment(to_bbox, to_edge)
+    return _closest_points_on_segments(seg1[0], seg1[1], seg2[0], seg2[1])
+
+
+def _emit_arrow_label(
+    svg_root: ET.Element,
+    arrow: _ArrowSpec,
+    p_from: Tuple[float, float],
+    p_to: Tuple[float, float],
+) -> None:
+    mid_x = (p_from[0] + p_to[0]) / 2.0
+    mid_y = (p_from[1] + p_to[1]) / 2.0
+    angle = math.degrees(math.atan2(p_to[1] - p_from[1], p_to[0] - p_from[0]))
+    attrs = {
+        "x": _fmt(mid_x),
+        "y": _fmt(mid_y),
+        "text-anchor": "middle",
+        "font-size": _fmt(arrow.label_size),
+        "fill": arrow.label_fill,
+        "dominant-baseline": "middle",
+    }
+    if abs(angle) >= 15.0:
+        attrs["transform"] = f"rotate({_fmt(angle)} {_fmt(mid_x)} {_fmt(mid_y)})"
+    text = ET.Element(_q("text"), attrs)
+    text.text = arrow.label
+    svg_root.append(text)
+
+
+def _bbox_center(bbox: Tuple[float, float, float, float]) -> Tuple[float, float]:
+    left, top, right, bottom = bbox
+    return (left + right) / 2.0, (top + bottom) / 2.0
+
+
+def _edge_segment(
+    bbox: Tuple[float, float, float, float], edge: str
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    left, top, right, bottom = bbox
+    if edge == "left":
+        return (left, top), (left, bottom)
+    if edge == "right":
+        return (right, top), (right, bottom)
+    if edge == "top":
+        return (left, top), (right, top)
+    if edge == "bottom":
+        return (left, bottom), (right, bottom)
+    raise ValueError(f"invalid edge for segment resolution: {edge}")
+
+
+def _nearest_point_on_edge(
+    bbox: Tuple[float, float, float, float], edge: str, point: Tuple[float, float]
+) -> Tuple[float, float]:
+    (x1, y1), (x2, y2) = _edge_segment(bbox, edge)
+    px, py = point
+    vx = x2 - x1
+    vy = y2 - y1
+    seg_len_sq = vx * vx + vy * vy
+    if seg_len_sq <= 1e-12:
+        return (x1, y1)
+    t = ((px - x1) * vx + (py - y1) * vy) / seg_len_sq
+    t = max(0.0, min(1.0, t))
+    return (x1 + t * vx, y1 + t * vy)
+
+
+def _closest_points_on_segments(
+    p1: Tuple[float, float],
+    q1: Tuple[float, float],
+    p2: Tuple[float, float],
+    q2: Tuple[float, float],
+) -> Tuple[Tuple[float, float], Tuple[float, float]]:
+    # Standard closest-points algorithm for two 2D segments.
+    x1, y1 = p1
+    x2, y2 = q1
+    x3, y3 = p2
+    x4, y4 = q2
+
+    ux, uy = x2 - x1, y2 - y1
+    vx, vy = x4 - x3, y4 - y3
+    wx, wy = x1 - x3, y1 - y3
+
+    a = ux * ux + uy * uy
+    b = ux * vx + uy * vy
+    c = vx * vx + vy * vy
+    d = ux * wx + uy * wy
+    e = vx * wx + vy * wy
+
+    denom = a * c - b * b
+    s_n, s_d = 0.0, denom
+    t_n, t_d = 0.0, denom
+
+    if denom < 1e-12:
+        s_n = 0.0
+        s_d = 1.0
+        t_n = e
+        t_d = c
+    else:
+        s_n = b * e - c * d
+        t_n = a * e - b * d
+        if s_n < 0.0:
+            s_n = 0.0
+            t_n = e
+            t_d = c
+        elif s_n > s_d:
+            s_n = s_d
+            t_n = e + b
+            t_d = c
+
+    if t_n < 0.0:
+        t_n = 0.0
+        if -d < 0.0:
+            s_n = 0.0
+        elif -d > a:
+            s_n = s_d
+        else:
+            s_n = -d
+            s_d = a
+    elif t_n > t_d:
+        t_n = t_d
+        if (-d + b) < 0.0:
+            s_n = 0
+        elif (-d + b) > a:
+            s_n = s_d
+        else:
+            s_n = -d + b
+            s_d = a
+
+    sc = 0.0 if abs(s_n) < 1e-12 else s_n / s_d
+    tc = 0.0 if abs(t_n) < 1e-12 else t_n / t_d
+
+    c1 = (x1 + sc * ux, y1 + sc * uy)
+    c2 = (x3 + tc * vx, y3 + tc * vy)
+    return c1, c2
+
+
 def _collect_templates(root: ET.Element, diag_ns: str) -> Dict[str, List[ET.Element]]:
     templates: Dict[str, List[ET.Element]] = {}
     new_children: List[ET.Element] = []
@@ -754,10 +1159,10 @@ def _apply_root_bounds(
     if bbox is None:
         return
     raw_min_x, raw_min_y, raw_max_x, raw_max_y = bbox
-    min_x = min(0.0, raw_min_x)
-    min_y = min(0.0, raw_min_y)
-    max_x = max(0.0, raw_max_x)
-    max_y = max(0.0, raw_max_y)
+    min_x = raw_min_x
+    min_y = raw_min_y
+    max_x = raw_max_x
+    max_y = raw_max_y
     width_needed = max(max_x - min_x, 0.0)
     height_needed = max(max_y - min_y, 0.0)
     if width_needed == 0.0 and height_needed == 0.0:
@@ -783,10 +1188,10 @@ def _apply_resvg_bounds(
     if not overall:
         return
     left, top, right, bottom = overall
-    min_x = min(0.0, left)
-    min_y = min(0.0, top)
-    width_needed = max(right - min_x, 0.0)
-    height_needed = max(bottom - min_y, 0.0)
+    min_x = left
+    min_y = top
+    width_needed = max(right - left, 0.0)
+    height_needed = max(bottom - top, 0.0)
     if diagram_padding > 0:
         min_x -= diagram_padding
         min_y -= diagram_padding

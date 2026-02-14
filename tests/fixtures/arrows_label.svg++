@@ -1,0 +1,9 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .card { fill:#ecfeff; stroke:#0e7490; stroke-width:1; }
+    .title { font-size:13px; }
+  </style>
+  <diag:flex id="a" x="20" y="40" width="150" padding="10" background-class="card"><text class="title">Producer</text></diag:flex>
+  <diag:flex id="b" x="300" y="40" width="150" padding="10" background-class="card"><text class="title">Queue</text></diag:flex>
+  <diag:arrow from="a" to="b" label="events" label-size="11" label-fill="#0f766e" stroke="#0f766e" stroke-width="1.5"/>
+</diag:diagram>

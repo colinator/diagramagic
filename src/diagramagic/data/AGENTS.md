@@ -32,6 +32,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 
 - `<diag:diagram>` — root container. Accepts normal `<svg>` attributes (`width`, `height`, `viewBox`, styles), but **all are optional**—the renderer auto-calculates size and viewBox from content bounds. Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent). `diag:padding` adds symmetrical padding around content (defaults to 0).
 - `<diag:flex>` — column/row layout block.
+- `<diag:arrow>` — connector between two elements by `id`.
   - Attributes: `x`, `y`, `width` (total width), `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
   - Children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
   - Width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
@@ -118,6 +119,18 @@ Templates let you define reusable components and instantiate them with different
 ```
 
 The second instance overrides `background-class`, so it gets a different style while keeping the same structure.
+
+## Arrows
+
+Use arrows to connect rendered elements by id:
+
+```xml
+<diag:arrow from="auth" to="db" label="queries"/>
+```
+
+- `from` / `to` must reference element `id` attributes in the final diagram.
+- Endpoints are selected automatically via center-line intersection with each element bbox.
+- If no marker attributes are specified, a default arrowhead is added to `marker-end`.
 
 ## Common Patterns
 
