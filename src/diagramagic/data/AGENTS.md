@@ -259,5 +259,6 @@ diagramagic compile tcp.svg++ > tcp.svg
 - For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
 - For a quick reference, run `diagramagic cheatsheet` to display this guide.
+- For full agent operating guidance, run `diagramagic skill`.
 
 For full semantics (grammar, examples, future extensions) see `PROJECTSPEC.md`.

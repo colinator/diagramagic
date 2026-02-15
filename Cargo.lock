@@ -79,7 +79,7 @@ checksum = "8d7439c3735f405729d52c3fbbe4de140eaf938a1fe47d227c27f8254d4302a5"
 
 [[package]]
 name = "diagramagic-resvg"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "pyo3",
  "resvg",

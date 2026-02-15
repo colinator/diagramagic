@@ -1,6 +1,6 @@
 [project]
 name = "diagramagic"
-version = "0.1.10"
+version = "0.1.11"
 description = "svg++ reference renderer"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -35,4 +35,5 @@ include = [
     "src/diagramagic/data/README.md",
     "src/diagramagic/data/diagramagic_patterns.md",
     "src/diagramagic/data/diagramagic_prompt.txt",
+    "src/diagramagic/data/diagramagic_skill.md",
 ]

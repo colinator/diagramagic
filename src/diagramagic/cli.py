@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from .diagramagic import FocusNotFoundError, diagramagic, render_png
-from .resources import load_cheatsheet, load_patterns, load_prompt
+from .resources import load_cheatsheet, load_patterns, load_prompt, load_skill
 
 
 @dataclass
@@ -77,6 +77,7 @@ def _build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("cheatsheet", help="Print svg++ quick reference")
     subparsers.add_parser("patterns", help="Print canonical svg++ pattern reference")
     subparsers.add_parser("prompt", help="Print short prompt fragment for agents")
+    subparsers.add_parser("skill", help="Print integration skill instructions for agents")
 
     return parser
 
@@ -347,7 +348,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         err = CliError(
             "E_ARGS",
             "missing subcommand",
-            hint="Use one of: compile, render, cheatsheet, patterns, prompt.",
+            hint="Use one of: compile, render, cheatsheet, patterns, prompt, skill.",
             exit_code=2,
         )
         _emit_error(err, error_format="text")
@@ -377,18 +378,21 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         if args.command == "prompt":
             print(load_prompt())
             return 0
+        if args.command == "skill":
+            print(load_skill())
+            return 0
 
         raise CliError(
             "E_ARGS",
             "missing subcommand",
-            hint="Use one of: compile, render, cheatsheet, patterns, prompt.",
+            hint="Use one of: compile, render, cheatsheet, patterns, prompt, skill.",
             exit_code=2,
         )
     except UsageError as exc:
         err = CliError(
             "E_ARGS",
             str(exc),
-            hint="Use subcommands: compile, render, cheatsheet, patterns, prompt.",
+            hint="Use subcommands: compile, render, cheatsheet, patterns, prompt, skill.",
             exit_code=2,
         )
         _emit_error(err, error_format=error_format)

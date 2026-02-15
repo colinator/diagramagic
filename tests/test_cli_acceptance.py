@@ -218,6 +218,14 @@ class CLIAcceptanceTests(unittest.TestCase):
         self.assertEqual(payload["code"], "E_ARGS")
         self.assertFalse(payload["ok"])
 
+    def test_skill_command_prints_integration_instructions(self) -> None:
+        code, out, _png, err = self.run_cli(["skill"])
+        self.assertEqual(code, 0, err)
+        self.assertIn("diagramagic Agent Skill", out)
+        self.assertIn("diagramagic compile", out)
+        self.assertIn("diagramagic render", out)
+        self.assertIn("Error recovery policy", out)
+
     def test_debug_traceback_gate(self) -> None:
         with mock.patch("diagramagic.cli.diagramagic", side_effect=RuntimeError("boom")):
             code, _out, _png, err = self.run_cli(["compile", "--text", "<diag:diagram xmlns='http://www.w3.org/2000/svg' xmlns:diag='x'></diag:diagram>"])

@@ -14,3 +14,8 @@ def load_patterns() -> str:
 def load_prompt() -> str:
     with resources.files(__package__).joinpath("data/diagramagic_prompt.txt").open("r", encoding="utf-8") as fh:
         return fh.read()
+
+
+def load_skill() -> str:
+    with resources.files(__package__).joinpath("data/diagramagic_skill.md").open("r", encoding="utf-8") as fh:
+        return fh.read()
