@@ -1,6 +1,6 @@
 [project]
 name = "diagramagic"
-version = "0.1.13"
+version = "0.1.14"
 description = "svg++ reference renderer"
 readme = "README.md"
 requires-python = ">=3.9"
