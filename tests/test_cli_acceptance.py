@@ -197,6 +197,182 @@ class CLIAcceptanceTests(unittest.TestCase):
             self.assertEqual(code, 0, err)
             self.assertTrue((Path(td) / "diagram.png").exists())
 
+    def test_include_basic_and_transform(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            child = Path(td) / "child.svg++"
+            parent = Path(td) / "parent.svg++"
+            child.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex id="child_box" width="120" padding="8"><text style="font-size:12px">Child</text></diag:flex>
+</diag:diagram>
+""".strip()
+            )
+            parent.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include id="inc1" src="child.svg++" x="40" y="60" scale="1.5"/>
+</diag:diagram>
+""".strip()
+            )
+            out = Path(td) / "out.svg"
+            code, _out, _png, err = self.run_cli(["compile", str(parent), "-o", str(out)])
+            self.assertEqual(code, 0, err)
+            root = ET.fromstring(out.read_text())
+            group = root.find(".//{http://www.w3.org/2000/svg}g[@id='inc1']")
+            self.assertIsNotNone(group)
+            self.assertEqual(group.get("transform"), "translate(40 60) scale(1.5)")
+            self.assertIn("Child", out.read_text())
+
+    def test_include_inside_flex_contributes_bounds(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            child = Path(td) / "child.svg++"
+            parent = Path(td) / "parent.svg++"
+            parent_no_include = Path(td) / "parent_no_include.svg++"
+            child.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex width="180" padding="10"><text style="font-size:12px">Included block with some width</text></diag:flex>
+</diag:diagram>
+""".strip()
+            )
+            parent.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex width="260" padding="10" gap="8">
+    <diag:include src="child.svg++" scale="1.2"/>
+    <text style="font-size:12px">After include</text>
+  </diag:flex>
+</diag:diagram>
+""".strip()
+            )
+            parent_no_include.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex width="260" padding="10" gap="8">
+    <text style="font-size:12px">After include</text>
+  </diag:flex>
+</diag:diagram>
+""".strip()
+            )
+            out = Path(td) / "out.svg"
+            out2 = Path(td) / "out2.svg"
+            code, _stdout, _png, err = self.run_cli(["compile", str(parent), "-o", str(out)])
+            self.assertEqual(code, 0, err)
+            code, _stdout, _png, err = self.run_cli(["compile", str(parent_no_include), "-o", str(out2)])
+            self.assertEqual(code, 0, err)
+            root = ET.fromstring(out.read_text())
+            root2 = ET.fromstring(out2.read_text())
+            height = float(root.get("height"))
+            height2 = float(root2.get("height"))
+            self.assertGreater(height, height2)
+
+    def test_include_missing_file_error(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="definitely_missing.svg++"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_INCLUDE_NOT_FOUND", err)
+
+    def test_include_invalid_root_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            child = Path(td) / "child.svg++"
+            parent = Path(td) / "parent.svg++"
+            child.write_text('<svg xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="10" height="10"/></svg>')
+            parent.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="child.svg++"/>
+</diag:diagram>
+""".strip()
+            )
+            code, _out, _png, err = self.run_cli(["compile", str(parent)])
+            self.assertEqual(code, 3)
+            self.assertIn("E_INCLUDE_ROOT", err)
+
+    def test_include_cycle_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            a = Path(td) / "a.svg++"
+            b = Path(td) / "b.svg++"
+            a.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="b.svg++"/>
+</diag:diagram>
+""".strip()
+            )
+            b.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="a.svg++"/>
+</diag:diagram>
+""".strip()
+            )
+            code, _out, _png, err = self.run_cli(["compile", str(a)])
+            self.assertEqual(code, 3)
+            self.assertIn("E_INCLUDE_CYCLE", err)
+
+    def test_include_id_collision_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            child = Path(td) / "child.svg++"
+            parent = Path(td) / "parent.svg++"
+            child.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="dup" x="0" y="0" width="20" height="20"/>
+</diag:diagram>
+""".strip()
+            )
+            parent.write_text(
+                """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="dup" x="10" y="10" width="20" height="20"/>
+  <diag:include src="child.svg++"/>
+</diag:diagram>
+""".strip()
+            )
+            code, _out, _png, err = self.run_cli(["compile", str(parent)])
+            self.assertEqual(code, 3)
+            self.assertIn("E_INCLUDE_ID_COLLISION", err)
+
+    def test_include_invalid_args_error(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="x.svg++" scale="0"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_INCLUDE_ARGS", err)
+
+    def test_include_depth_error(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            n = 12
+            for i in range(n):
+                path = Path(td) / f"n{i}.svg++"
+                if i < n - 1:
+                    path.write_text(
+                        (
+                            "<diag:diagram xmlns=\"http://www.w3.org/2000/svg\" "
+                            "xmlns:diag=\"https://diagramagic.ai/ns\">"
+                            f"<diag:include src=\"n{i+1}.svg++\"/>"
+                            "</diag:diagram>"
+                        )
+                    )
+                else:
+                    path.write_text(
+                        "<diag:diagram xmlns=\"http://www.w3.org/2000/svg\" "
+                        "xmlns:diag=\"https://diagramagic.ai/ns\">"
+                        "<diag:flex width=\"100\"><text style=\"font-size:12px\">leaf</text></diag:flex>"
+                        "</diag:diagram>"
+                    )
+            code, _out, _png, err = self.run_cli(["compile", str(Path(td) / "n0.svg++")])
+            self.assertEqual(code, 3)
+            self.assertIn("E_INCLUDE_DEPTH", err)
+
     def test_accepts_multiple_diag_namespace_uris(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             src = Path(td) / "input.svg++"

@@ -1,0 +1,9 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .card { fill:#eff6ff; stroke:#1d4ed8; stroke-width:1; }
+    .label { font-size:13px; }
+  </style>
+  <diag:flex id="child_card" width="170" padding="10" background-class="card">
+    <text class="label">Included Child</text>
+  </diag:flex>
+</diag:diagram>

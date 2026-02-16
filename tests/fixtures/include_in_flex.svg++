@@ -1,0 +1,7 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <diag:flex width="320" direction="column" gap="10" padding="10" background-style="fill:#f8fafc;stroke:#475569;stroke-width:1">
+    <text style="font-size:13px">Parent Header</text>
+    <diag:include src="includes/flex_child.svg++" scale="1.1"/>
+    <text style="font-size:12px">Footer text</text>
+  </diag:flex>
+</diag:diagram>

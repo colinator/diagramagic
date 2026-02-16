@@ -1,0 +1,6 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <diag:include id="inc_scaled" src="includes/basic_child.svg++" x="30" y="30" scale="1.4"/>
+  <diag:flex x="320" y="32" width="160" padding="10" background-style="fill:#fef3c7;stroke:#b45309;stroke-width:1">
+    <text style="font-size:12px">Reference block</text>
+  </diag:flex>
+</diag:diagram>

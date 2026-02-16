@@ -6,6 +6,7 @@ Use diag:wrap="true" for multi-word text blocks.
 Use stable id attributes on connected elements before adding diag:arrow.
 For diag:arrow, set from/to to element ids or diag:anchor ids (not template names or labels).
 Use diag:anchor when you need precise connection points or timeline-style alignment.
+Use diag:include for large reusable subgraphs instead of inlining very large trees.
 Use <g transform="..."> to move/scale groups.
 Mix raw SVG (lines, arrows, paths) with svg++ layout freely.
 Assign stable id attributes for focused render and targeted updates.

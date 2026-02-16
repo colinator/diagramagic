@@ -1,0 +1,3 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:include src="cycle_a.svg++"/>
+</diag:diagram>

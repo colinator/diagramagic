@@ -1,0 +1,8 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .child { fill:#ecfeff; stroke:#0891b2; stroke-width:1; }
+  </style>
+  <diag:flex width="220" padding="12" background-class="child">
+    <text style="font-size:12px" diag:wrap="true">This included block should contribute size when embedded inside a parent flex.</text>
+  </diag:flex>
+</diag:diagram>

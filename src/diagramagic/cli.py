@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
 
-from .diagramagic import FocusNotFoundError, diagramagic, render_png
+from .diagramagic import DiagramagicSemanticError, FocusNotFoundError, diagramagic, render_png
 from .resources import load_cheatsheet, load_patterns, load_prompt, load_skill
 
 
@@ -210,6 +210,14 @@ def _error_from_exception(exc: Exception) -> CliError:
             exit_code=4,
             retryable=True,
         )
+    if isinstance(exc, DiagramagicSemanticError):
+        return CliError(
+            exc.code,
+            str(exc),
+            hint="Check svg++ semantics and referenced ids/files.",
+            exit_code=3,
+            retryable=True,
+        )
     if isinstance(exc, ET.ParseError):
         line, column = getattr(exc, "position", (None, None))
         return CliError(
@@ -278,7 +286,11 @@ def _handle_compile(args: argparse.Namespace) -> int:
 
     source, source_name, source_path = _read_input(args.input, args.text)
     template_sources = _resolve_template_sources(args.templates)
-    svg_text = diagramagic(source, shared_template_sources=template_sources)
+    svg_text = diagramagic(
+        source,
+        shared_template_sources=template_sources,
+        source_path=source_path,
+    )
 
     if args.stdout or source_path is None:
         sys.stdout.write(svg_text)
@@ -312,7 +324,11 @@ def _handle_render(args: argparse.Namespace) -> int:
     template_sources = _resolve_template_sources(args.templates)
 
     if _is_svgpp(source):
-        svg_text = diagramagic(source, shared_template_sources=template_sources)
+        svg_text = diagramagic(
+            source,
+            shared_template_sources=template_sources,
+            source_path=source_path,
+        )
     else:
         if template_sources:
             raise CliError(

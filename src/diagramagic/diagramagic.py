@@ -47,6 +47,18 @@ class FocusNotFoundError(ValueError):
     """Raised when a requested focus id does not exist in rendered SVG."""
 
 
+class DiagramagicSemanticError(ValueError):
+    """Structured semantic error with stable code for CLI mapping."""
+
+    def __init__(self, code: str, message: str) -> None:
+        super().__init__(message)
+        self.code = code
+        self.message = message
+
+    def __str__(self) -> str:
+        return self.message
+
+
 @dataclass
 class _ArrowSpec:
     from_id: str
@@ -240,7 +252,15 @@ def _q(tag: str) -> str:
     return f"{{{SVG_NS}}}{tag}"
 
 
-def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] = None) -> str:
+def diagramagic(
+    svgpp_source: str,
+    shared_template_sources: Optional[List[str]] = None,
+    *,
+    source_path: Optional[Path] = None,
+    _include_stack: Optional[List[Path]] = None,
+    _include_depth: int = 0,
+    _max_include_depth: int = 10,
+) -> str:
     """Convert svg++ markup to plain SVG."""
     try:
         root = ET.fromstring(svgpp_source)
@@ -271,6 +291,18 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
     templates.update(_collect_templates(root, diag_ns))
     if templates:
         _expand_instances_in_tree(root, diag_ns, templates)
+    include_base = source_path.parent if source_path is not None else Path.cwd()
+    has_includes = _expand_includes_in_tree(
+        root,
+        diag_ns,
+        include_base=include_base,
+        shared_template_sources=shared_template_sources,
+        include_stack=_include_stack or [],
+        include_depth=_include_depth,
+        max_include_depth=_max_include_depth,
+    )
+    if has_includes:
+        _ensure_unique_ids(root)
     anchor_specs = _collect_anchors(root, diag_ns)
     arrow_specs = _collect_arrows(root, diag_ns)
 
@@ -296,6 +328,143 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
     _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
+
+
+def _expand_includes_in_tree(
+    node: ET.Element,
+    diag_ns: str,
+    *,
+    include_base: Path,
+    shared_template_sources: Optional[List[str]],
+    include_stack: List[Path],
+    include_depth: int,
+    max_include_depth: int,
+) -> bool:
+    found_include = False
+    new_children: List[ET.Element] = []
+    for child in list(node):
+        ns = _namespace_of(child.tag)
+        local = _local_name(child.tag)
+        if ns == diag_ns and local == "include":
+            expanded = _expand_single_include(
+                child,
+                diag_ns,
+                include_base=include_base,
+                shared_template_sources=shared_template_sources,
+                include_stack=include_stack,
+                include_depth=include_depth,
+                max_include_depth=max_include_depth,
+            )
+            new_children.append(expanded)
+            found_include = True
+            continue
+        found_include = _expand_includes_in_tree(
+            child,
+            diag_ns,
+            include_base=include_base,
+            shared_template_sources=shared_template_sources,
+            include_stack=include_stack,
+            include_depth=include_depth,
+            max_include_depth=max_include_depth,
+        ) or found_include
+        new_children.append(child)
+    node[:] = new_children
+    return found_include
+
+
+def _expand_single_include(
+    include_node: ET.Element,
+    diag_ns: str,
+    *,
+    include_base: Path,
+    shared_template_sources: Optional[List[str]],
+    include_stack: List[Path],
+    include_depth: int,
+    max_include_depth: int,
+) -> ET.Element:
+    src = (include_node.get("src") or "").strip()
+    if not src:
+        raise DiagramagicSemanticError("E_INCLUDE_ARGS", "diag:include requires non-empty src attribute")
+    x = _parse_length(include_node.get("x"), 0.0)
+    y = _parse_length(include_node.get("y"), 0.0)
+    scale = _parse_length(include_node.get("scale"), 1.0)
+    if x is None or y is None or scale is None or scale <= 0:
+        raise DiagramagicSemanticError(
+            "E_INCLUDE_ARGS",
+            f'diag:include src="{src}" requires numeric x/y and scale > 0',
+        )
+
+    resolved = Path(src).expanduser()
+    if not resolved.is_absolute():
+        resolved = include_base / resolved
+    try:
+        resolved_norm = resolved.resolve()
+    except OSError:
+        resolved_norm = resolved.absolute()
+
+    if include_depth >= max_include_depth:
+        raise DiagramagicSemanticError(
+            "E_INCLUDE_DEPTH",
+            f"maximum include depth exceeded ({max_include_depth}) while resolving {resolved_norm}",
+        )
+    if resolved_norm in include_stack:
+        chain = " -> ".join(str(p) for p in include_stack + [resolved_norm])
+        raise DiagramagicSemanticError("E_INCLUDE_CYCLE", f"include cycle detected: {chain}")
+    if not resolved_norm.exists():
+        raise DiagramagicSemanticError("E_INCLUDE_NOT_FOUND", f"include file not found: {resolved_norm}")
+
+    try:
+        include_text = resolved_norm.read_text()
+    except OSError as exc:
+        raise DiagramagicSemanticError(
+            "E_INCLUDE_NOT_FOUND", f"failed to read include file {resolved_norm}: {exc}"
+        ) from exc
+
+    try:
+        parsed = ET.fromstring(include_text)
+    except ET.ParseError as exc:
+        line, col = getattr(exc, "position", (None, None))
+        loc = f" at line {line}, column {col}" if line is not None and col is not None else ""
+        raise DiagramagicSemanticError(
+            "E_INCLUDE_PARSE", f"invalid include XML in {resolved_norm}{loc}: {exc}"
+        ) from exc
+    if _local_name(parsed.tag) != "diagram":
+        raise DiagramagicSemanticError(
+            "E_INCLUDE_ROOT", f'included file {resolved_norm} must use <diag:diagram> root'
+        )
+
+    compiled_svg = diagramagic(
+        include_text,
+        shared_template_sources=shared_template_sources,
+        source_path=resolved_norm,
+        _include_stack=include_stack + [resolved_norm],
+        _include_depth=include_depth + 1,
+        _max_include_depth=max_include_depth,
+    )
+    compiled_root = ET.fromstring(compiled_svg)
+
+    wrapper_attrs = {"transform": f"translate({_fmt(x)} {_fmt(y)}) scale({_fmt(scale)})"}
+    include_id = include_node.get("id")
+    if include_id:
+        wrapper_attrs["id"] = include_id
+    wrapper = ET.Element(_q("g"), wrapper_attrs)
+    for child in list(compiled_root):
+        wrapper.append(deepcopy(child))
+    return wrapper
+
+
+def _ensure_unique_ids(root: ET.Element) -> None:
+    seen: Dict[str, ET.Element] = {}
+    for node in root.iter():
+        node_id = node.get("id")
+        if not node_id:
+            continue
+        if node_id in seen:
+            raise DiagramagicSemanticError(
+                "E_INCLUDE_ID_COLLISION",
+                f'duplicate id "{node_id}" found after include expansion',
+            )
+        seen[node_id] = node
 
 
 def render_png(

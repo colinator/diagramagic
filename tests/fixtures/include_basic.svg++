@@ -1,0 +1,3 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <diag:include id="inc_basic" src="includes/basic_child.svg++" x="40" y="30"/>
+</diag:diagram>

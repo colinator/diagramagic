@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.5 -0.5 221 64" width="221" height="64">
+  <rect x="-0.5" y="-0.5" width="221" height="64" fill="#fff" />
+  <style>
+    .child { fill:#ecfeff; stroke:#0891b2; stroke-width:1; }
+  </style>
+  <g transform="translate(0, 0)">
+    <rect x="0" y="0" width="220" height="63" class="child" />
+    <g transform="translate(12, 12)">
+      <text style="font-size:12px" font-family="sans-serif" y="10">
+        <tspan x="0" dy="0">This included block should</tspan>
+        <tspan x="0" dy="1.2em">contribute size when embedded</tspan>
+        <tspan x="0" dy="1.2em">inside a parent flex.</tspan>
+      </text>
+    </g>
+  </g>
+</svg>

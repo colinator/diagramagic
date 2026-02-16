@@ -88,3 +88,15 @@
   <diag:arrow from="c_t1" to="s_t1" label="SYN"/>
 </diag:diagram>
 ```
+
+## 8) Include a sub-diagram file
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex width="620" direction="column" gap="12">
+    <diag:flex width="620" padding="10" background-class="card">
+      <text style="font-size:16px">System Summary</text>
+    </diag:flex>
+    <diag:include src="details/auth_flow.svg++" x="0" y="0" scale="0.9"/>
+  </diag:flex>
+</diag:diagram>
+```

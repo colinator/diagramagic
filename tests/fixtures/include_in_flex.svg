@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-16.5 -16.5 353 170.4" width="353" height="170.4">
+  <rect x="-16.5" y="-16.5" width="353" height="170.4" fill="#fff" />
+  <g transform="translate(0, 0)">
+    <rect x="0" y="0" width="320" height="137.4" style="fill:#f8fafc;stroke:#475569;stroke-width:1" />
+    <g transform="translate(10, 10)">
+      <text style="font-size:13px" font-family="sans-serif" y="11">Parent Header</text>
+    </g>
+    <g transform="translate(10, 34)">
+      <g transform="translate(0 0) scale(1.1)">
+        <rect x="-0.5" y="-0.5" width="221" height="64" fill="#fff" />
+        <style>
+    .child { fill:#ecfeff; stroke:#0891b2; stroke-width:1; }
+  </style>
+        <g transform="translate(0, 0)">
+          <rect x="0" y="0" width="220" height="63" class="child" />
+          <g transform="translate(12, 12)">
+            <text style="font-size:12px" font-family="sans-serif" y="10">
+              <tspan x="0" dy="0">This included block should</tspan>
+              <tspan x="0" dy="1.2em">contribute size when embedded</tspan>
+              <tspan x="0" dy="1.2em">inside a parent flex.</tspan>
+            </text>
+          </g>
+        </g>
+      </g>
+    </g>
+    <g transform="translate(10, 114.4)">
+      <text style="font-size:12px" font-family="sans-serif" y="10">Footer text</text>
+    </g>
+  </g>
+</svg>

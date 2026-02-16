@@ -40,6 +40,10 @@ The diagram automatically sizes to fit your content—no need to specify `width`
   - Required: `id`.
   - Position mode: absolute (`x` + `y`) or relative (`relative-to` + optional `side="top|bottom|left|right|center"`).
   - Optional offsets: `offset-x`, `offset-y`.
+- `<diag:include>` — include another svg++ file as a compiled sub-diagram.
+  - Required: `src` (resolved relative to the including file).
+  - Optional: `x`, `y`, `scale`, `id`.
+  - Included content is opaque in v1; no cross-boundary ID references.
 - `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
 - `<diag:flex>` children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
 - `<diag:flex>` width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
@@ -72,6 +76,11 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | `relative-to` | Relative mode | — | id string | Target element id for relative anchor mode |
 | `side` | No | `center` | — | `top`, `bottom`, `left`, `right`, `center` |
 | `offset-x`, `offset-y` | No | `0` | pixels | Applied after base anchor position |
+| **diag:include** | | | | |
+| `src` | Yes | — | path string | Include file path (relative to including file) |
+| `x`, `y` | No | `0` | pixels | Wrapper translation |
+| `scale` | No | `1` | scalar | Uniform include scale (`> 0`) |
+| `id` | No | none | id string | Assigned to emitted include wrapper `<g>` |
 | **text** | | | | |
 | `diag:wrap` | No | `"false"` | — | Set `"true"` to enable line wrapping |
 | `diag:max-width` | No | container width | pixels | Override wrap width for this text element |
@@ -167,6 +176,18 @@ Use anchors to define precise named points:
 - Anchors are invisible (no emitted SVG node).
 - Position mode is either absolute (`x`+`y`) or relative (`relative-to` + optional `side`).
 - Anchor ids share the global id namespace (duplicates are errors).
+
+## Includes
+
+Use includes to compose large diagrams from sub-files:
+
+```xml
+<diag:include src="subdiagram.svg++" x="280" y="120" scale="0.9"/>
+```
+
+- `src` is resolved relative to the current file.
+- Include expansion happens at compile time (final SVG is flattened).
+- In v1, do not reference included internal IDs from the parent.
 
 ## Common Patterns
 
