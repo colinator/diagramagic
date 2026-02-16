@@ -1,373 +1,231 @@
-# svg++ v0.1 Specification
-*A minimal flexbox-inspired diagram language that compiles to pure SVG*
-*"Text in → Text out" reference for humans and LLMs*
+# svg++ Specification v1
+*A small SVG extension language that compiles to plain SVG 1.1*
 
----
+## 1. Purpose
 
-# 1. Purpose
+svg++ is XML. It keeps normal SVG syntax and adds a small set of `diag:` elements/attributes for layout and composition.
 
-svg++ is a tiny, deterministic, XML-based language used to describe diagrams. It is intended to be:
+Design goals:
+- LLM-friendly and human-editable
+- deterministic output
+- no runtime format lock-in (always compiles to standard SVG)
 
-- **LLM-friendly** (simple, predictable syntax)
-- **Human-readable**
-- **Human-editable**
-- **Machine-expandable** into plain, standards-compliant **SVG 1.1**
-
-Reference renderer note: the implementation uses resvg for measurement; building/running requires a Rust toolchain.
-
-The system operates strictly as:
+Compilation model:
 
 ```
-svg++ input → svg++ compiler → raw SVG output
+svg++ input -> compiler -> plain SVG output
 ```
 
-There is **no requirement for file formats**, comments, or metadata—just **text in, text out**.
+## 2. Namespace
 
----
+A valid document uses a `diag:` namespace and a `<diag:diagram>` root.
 
-# 2. Core Principles
-
-1. **svg++ is XML** – all constructs use XML syntax and may mix with normal SVG elements.
-2. **All svg++ features live in the `diag:` namespace** – e.g. `<diag:flex>`, `<diag:diagram>`, `diag:wrap="true"`.
-3. **Output contains no `diag:` elements or attributes** – they are replaced by standard SVG nodes such as `<g>`, `<rect>`, `<text>`, `<tspan>`.
-4. **Layout is deterministic** – identical svg++ input always produces identical SVG output.
-5. **v0.1 scope is intentionally small** – one root element (`<diag:diagram>`), one layout primitive (`<diag:flex>`), wrapped text opt-in on `<text>`, and everything else is plain SVG. Templates, expressions, style inheritance, and auto-arrows are reserved for future versions.
-
----
-
-# 3. Syntax Summary (v0.1)
-
-## 3.1 Namespaces
-
-A valid svg++ document binds the `diag:` prefix, for example:
+Canonical namespace URI is:
 
 ```xml
-xmlns:diag="https://example.com/diag"
+xmlns:diag="https://diagramagic.ai/ns"
 ```
 
-This prefix identifies svg++ semantic elements and attributes.
-
-## 3.2 Root Element: `<diag:diagram>`
+The implementation accepts alternate `diag` namespace URIs, but canonical URI is recommended.
 
-There must be exactly one top-level svg++ container.
+## 3. Supported svg++ Constructs
 
-```xml
-<diag:diagram
-  xmlns="http://www.w3.org/2000/svg"
-  xmlns:diag="https://example.com/diag"
-  width="400"
-  height="200"
-  viewBox="0 0 400 200"
->
-  <!-- children -->
-</diag:diagram>
-```
-
-**Allowed contents**
-
-- Any number of svg++ layout elements (`<diag:flex>`)
-- Any number of normal SVG elements (`<rect>`, `<text>`, `<line>`, `<g>`, `<style>`, …)
+### 3.1 Root and Layout
 
-**Optional attributes**
+- `<diag:diagram>`: root container; compiles to `<svg>`
+- `<diag:flex>`: row/column layout container
+- `<text diag:wrap="true">`: wrapped text on native SVG `<text>`
 
-| Attribute | Meaning |
-| --- | --- |
-| `width` | Output SVG width |
-| `height` | Output SVG height |
-| `viewBox` | Output SVG viewBox string |
-| `diag:background` | Canvas background fill color. Defaults to white; set to `none`/`transparent` to keep the SVG transparent. |
-| `diag:padding` | Padding in pixels around auto-calculated viewBox on all sides. Defaults to 0. |
-
-All other attributes are preserved and applied to the output `<svg>` element.
-
----
-
-# 4. Layout Element: `<diag:flex>`
-
-`<diag:flex>` is a flexbox-inspired layout container that positions its children vertically (`direction="column"`) or horizontally (`direction="row"`).
-
-## 4.1 Example (column stack)
-
-```xml
-<diag:flex
-  x="20" y="60"
-  width="150"
-  direction="column"
-  gap="6"
-  padding="10"
-  background-class="box"
->
-  <text class="title" diag:wrap="false">User</text>
-  <text class="body"  diag:wrap="false">id: Int</text>
-  <text class="body"  diag:wrap="false">name: String</text>
-</diag:flex>
-```
+### 3.2 Reuse and Composition
 
-## 4.2 Attributes
+- `<diag:template>`, `<diag:instance>`, `<diag:slot>`, `<diag:param>`: reusable templates
+- `<diag:include src="...">`: compile-time inclusion of another svg++ document
 
-| Attribute | Required | Type | Default | Meaning |
-| --- | --- | --- | --- | --- |
-| `x` | yes | number | — | Top-left X position |
-| `y` | yes | number | — | Top-left Y position |
-| `width` | no | number | auto | See layout semantics |
-| `direction` | no | `column` \| `row` | `column` | Main axis direction |
-| `gap` | no | number | `0` | Space between children on the main axis |
-| `padding` | no | number | `0` | Padding on all sides |
-| `background-class` | no | string | none | CSS class applied to auto background `<rect>` |
-| `background-style` | no | string | none | Inline style applied to auto background `<rect>` |
+### 3.3 Connectors
 
-Other attributes are preserved but ignored by svg++ semantics.
+- `<diag:arrow from="..." to="...">`: connector between element/anchor ids
+- `<diag:anchor>`: named coordinate for precise connector endpoints
 
----
+### 3.4 Graph Layout
 
-# 5. Text With Wrapping
+- `<diag:graph>`: automatic layered graph layout
+- `<diag:node>`: graph node content container
+- `<diag:edge>`: graph relationship + rendered edge
 
-svg++ uses standard SVG `<text>` elements, enhanced with two attributes:
+## 4. Element Semantics
 
-| Attribute | Type | Meaning |
-| --- | --- | --- |
-| `diag:wrap` | `"true"` / `"false"` | Whether to wrap text lines |
-| `diag:max-width` | number | Optional per-text override of container width |
-| `diag:font-family` | string | Optional default font family (inheritable, defaults to `sans-serif`) |
-| `diag:font-path` | string | Optional local `.ttf` path for precise metrics (inheritable) |
+### 4.1 `<diag:diagram>`
 
-Example:
+Attributes:
+- SVG attrs like `width`, `height`, `viewBox` are optional
+- `diag:background` (default white; `none`/`transparent` keeps transparency)
+- `diag:padding` (default `0`)
+- `diag:font-family`, `diag:font-path` (inherited defaults for text metrics)
 
-```xml
-<text class="body" diag:wrap="true">
-  This text is wrapped to the container’s width.
-</text>
-```
+Behavior:
+- emits `<svg>`
+- auto-calculates bounds/viewBox from rendered content when not explicitly set
+- strips all `diag:*` attributes/elements from output
 
-- When `diag:wrap="true"` the text content is processed into wrapped lines using font metrics, and the generated SVG uses `<tspan>` elements for each line.
-- When `diag:wrap="false"` (or omitted) the text is treated as a single line and width is measured directly from font metrics.
-- When `diag:font-family` or `diag:font-path` is supplied, the renderer measures text with that exact typeface. These attributes can be placed on `<text>`, any `<diag:flex>`, or the root `<diag:diagram>` to provide an inherited default.
+### 4.2 `<diag:flex>`
 
----
+Attributes:
+- `x`, `y` (default `0`)
+- `width` (optional)
+- `direction="column|row"` (default `column`)
+- `gap` (default `0`)
+- `padding` (default `0`)
+- `background-class`, `background-style`
 
-# 6. Layout Semantics (v0.1)
-
-This section defines how `<diag:flex>` expands into plain SVG.
+Behavior:
+- compiles to `<g transform="translate(x,y)">...`
+- column/row child placement with gap + padding
+- optional auto background `<rect>`
 
-## 6.1 General Strategy
+### 4.3 Wrapped text (`<text>`)
 
-1. Treat `<diag:flex>` as an invisible layout container.
-2. Measure each child:
-   - Wrapped text → perform line breaking.
-   - Unwrapped text → measure ascent, descent, and width.
-   - Shapes (`<rect>`, `<circle>`, `<path>`, …) → use explicit size attributes.
-3. Compute child positions within the container.
-4. Construct a `<g>` element:
-   - Apply `transform="translate(x,y)"`.
-   - Optionally insert a background `<rect>`.
-   - Insert the positioned children.
-5. Output that `<g>` in place of the original `<diag:flex>`.
-
-## 6.2 Column Layout (`direction="column"`)
-
-Let `CW` be the container width (explicit width or max child width), `P` the padding, and `G` the gap.
-
-1. Compute each child’s layout width: `childWidth = diag:max-width ?? CW`.
-2. Measure each child's height.
-3. Position children: start `y0 = P`, assign `child.y = y0`, then increment by `child.height + G`.
-4. Container height `CH = P + Σ(child.height) + G*(n-1) + P`.
-5. If background requested, emit:
-
-```xml
-<rect
-  x="0" y="0"
-  width="{CW + 2*P}"
-  height="{CH}"
-  class="background-class"
-  style="background-style"
-/>
-```
-
-6. Wrap background and children in `<g transform="translate(x,y)">`.
-
-## 6.3 Row Layout (`direction="row"`)
-
-Row layout mirrors column layout:
-
-- Children stack left to right.
-- Width = `padding + Σ(childWidth) + gap*(n-1) + padding`.
-- Height = `padding + max(childHeight) + padding`.
-
----
-
-# 7. Text Measurement and Wrapping Semantics
-
-## 7.1 Source Text Rules
-
-- Content inside `<text>` is treated as raw text except:
-  - Newlines (`\n`) become hard line breaks.
-  - `<tspan>` children are preserved only when `diag:wrap="false"` in v0.1.
-
-## 7.2 Wrapping Algorithm
-
-1. Determine available width `W = diag:max-width ?? containerProvidedWidth`.
-2. Break text into words using Unicode word boundaries.
-3. Fit words into lines using measured word widths.
-4. Determine line height via font metrics, or default to `1.2 × font-size` if unavailable.
-5. Emit `<text>` containing one `<tspan>` per line:
-
-```xml
-<text ...>
-  <tspan x="0" dy="0">First line…</tspan>
-  <tspan x="0" dy="1.2em">Second line…</tspan>
-  <!-- etc -->
-</text>
-```
-
----
-
-# 8. Templates (Experimental)
-
-Templates let you define reusable svg++ fragments and instantiate them elsewhere in the document.
-
-- **Definition**: Declare `<diag:template name="card">…</diag:template>` at the top level. The body can contain any mix of svg++/SVG elements (e.g. `<diag:flex>`, `<text>`, shapes).
-- **Slots**: Insert `<diag:slot name="title" />` inside `<text>` or `<tspan>` nodes to mark where instance values flow. Slots currently inject plain text.
-- **Parameters**: An instance provides `<diag:param name="title">…</diag:param>` children. Each parameter’s text replaces the matching slot; missing parameters default to empty text.
-- **Instantiation**: `<diag:instance template="card" x="40" y="80">…</diag:instance>` expands the template in place. Attributes on the instance override attributes on the template’s top-level nodes (e.g., `x`, `y`, `background-class`, `diag:max-width`).
-- **Scope**: Templates must live directly under `<diag:diagram>`. Instances can appear anywhere ordinary svg++ nodes are allowed.
-
-Example:
-
-```xml
-<diag:template name="note">
-  <diag:flex width="220" direction="column" padding="10" gap="6" background-class="card">
-    <text class="title" diag:wrap="false"><diag:slot name="title" /></text>
-    <text class="body" diag:wrap="true"><diag:slot name="body" /></text>
-  </diag:flex>
-</diag:template>
-
-<diag:instance template="note" x="32" y="90">
-  <diag:param name="title">Plan</diag:param>
-  <diag:param name="body">Outline dependencies and assign owners.</diag:param>
-</diag:instance>
-```
-
-Templates currently focus on text substitution; richer content slots (embedded SVG fragments, conditional sections) are reserved for a future release.
-
-# 9. Full Example (svg++ Input → Pure SVG Output)
-
-**svg++ input**
-
-```xml
-<diag:diagram
-  xmlns="http://www.w3.org/2000/svg"
-  xmlns:diag="https://example.com/diag"
-  width="400"
-  height="200"
-  viewBox="0 0 400 200"
->
-  <style>
-    .box { fill:#f5f5f5; stroke:#333; stroke-width:1.5; rx:6; ry:6; }
-    .title { font-size:14px; font-weight:600; }
-    .body { font-size:12px; }
-  </style>
-
-  <diag:flex
-    x="20" y="60"
-    width="150"
-    padding="10"
-    gap="4"
-    direction="column"
-    background-class="box"
-  >
-    <text class="title" diag:wrap="false">User</text>
-    <text class="body" diag:wrap="false">id: Int</text>
-    <text class="body" diag:wrap="false">name: String</text>
-  </diag:flex>
-</diag:diagram>
-```
-
-**Resulting SVG (schematic)**
-
-- Auto-generated `<g transform="translate(20,60)"> … </g>` containing measured `<text>` nodes.
-- Optional background `<rect>` with class `box` sized to the layout bounds.
-- No remaining `diag:` elements or attributes.
-
----
-
-# 10. Grammar (Informal EBNF)
-
-```ebnf
-Diagram        ::= DiagDiagram
-
-DiagDiagram    ::= <diag:diagram DiagDiagramAttrs>
-                     DiagramContent*
-                   </diag:diagram>
-
-DiagDiagramAttrs ::= [ width = Number ]
-                     [ height = Number ]
-                     [ viewBox = String ]
-                     (OtherAttrs)*
-
-DiagramContent ::= FlexElement
-                 | SvgElement          (* Any non-diag SVG element *)
-
-FlexElement    ::= <diag:flex FlexAttrs>
-                     DiagramContent*
-                   </diag:flex>
-
-FlexAttrs      ::= [ x = Number ]
-                   [ y = Number ]
-                   [ width = Number ]
-                   [ direction = ("row" | "column") ]
-                   [ gap = Number ]
-                   [ padding = Number ]
-                   [ background-class = String ]
-                   [ background-style = String ]
-                   (OtherAttrs)*
-
-TextElement    ::= <text TextAttrs> TextContent* </text>
-
-TextAttrs      ::= SvgTextAttrs*
-                   [ diag:wrap = ("true" | "false") ]
-                   [ diag:max-width = Number ]
-                   (OtherAttrs)*
-```
-
----
-
-# 11. Versioning and Future Extensions
-
-This document defines svg++ v0.1. Planned additions include:
-
-- Templates: `<diag:template>` + `<diag:instance>`
-- Arithmetic in attributes
-- Auto arrows / routing
-- Named variables / style inheritance
-- Horizontal/vertical alignment refinements
-- Layering and z-index
-- Grid layout
-
-Each future version will spell out added elements/attributes, backward compatibility guarantees, and strict version tagging.
-
----
-
-# 12. Reference Implementation Notes (Optional)
-
-A renderer typically implements:
-
-- XML parser to build a DOM-like tree.
-- Tree walker that handles `<diag:flex>`.
-- Text measurement via font metrics (HarfBuzz, canvas APIs, platform APIs, etc.).
-- Layout pass covering column/row placement, wrapping, and background generation.
-- SVG emission: create a new XML tree with pure SVG nodes and strip all `diag:*` namespaces.
-
----
-
-# 13. Summary
-
-svg++ v0.1 defines a minimal, predictable, LLM-friendly diagram language:
-
-- One root: `<diag:diagram>`
-- One layout primitive: `<diag:flex>`
-- Text wrapping via attributes on `<text>`
-- Reusable snippets via `<diag:template>` + `<diag:instance>`
-- Deterministic expansion into pure SVG
-- Simple XML-based grammar ready for future extensions
-
-This spec equips humans and LLMs to generate svg++ documents, parse them, implement renderers, and evolve the language further.
+Attributes:
+- `diag:wrap="true|false"` (default `false`)
+- `diag:max-width` (optional)
+- `diag:font-family`, `diag:font-path` (optional, inheritable)
+
+Behavior:
+- `diag:wrap="true"` inserts wrapped `<tspan>` lines
+- `diag:wrap="false"` preserves single-line text measurement
+
+### 4.4 Templates
+
+- Define at root via `<diag:template name="...">...</diag:template>`
+- Instantiate via `<diag:instance template="...">` with `<diag:param>` children
+- `<diag:slot name="..."/>` placeholders are text-substituted
+- instance attributes override template top-level element attributes
+
+### 4.5 `<diag:arrow>`
+
+Attributes:
+- required: `from`, `to`
+- optional: `label`, `label-size`, `label-fill`, stroke/presentation attrs, marker attrs
+
+Behavior:
+- endpoints resolved by center-line/border intersection (or exact anchor points)
+- if marker attrs omitted, default `marker-end` arrowhead is added
+- legacy `from-edge` / `to-edge` overrides are not supported
+
+### 4.6 `<diag:anchor>`
+
+Attributes:
+- required: `id`
+- absolute mode: `x` + `y`
+- relative mode: `relative-to` + optional `side="top|bottom|left|right|center"`
+- optional offsets: `offset-x`, `offset-y`
+
+Behavior:
+- anchors are semantic only (no visible emitted SVG node)
+- usable as `diag:arrow` endpoints
+
+### 4.7 `<diag:include>`
+
+Attributes:
+- required: `src`
+- optional: `x`, `y`, `scale`, `id`
+
+Behavior:
+- resolves and compiles included svg++ recursively at compile time
+- emits one transformed `<g>` wrapper with included compiled children
+- includes flatten into final output (no `diag:include` remains)
+- depth/cycle checks are enforced
+
+v1 constraints:
+- include depth limit: `10`
+- include cycles are errors
+- ID collisions after expansion are errors
+- design intent is opaque include boundaries; avoid cross-boundary references
+
+### 4.8 `<diag:graph>`, `<diag:node>`, `<diag:edge>`
+
+`diag:graph` attributes:
+- `direction="TB|BT|LR|RL"` (default `TB`)
+- `node-gap` (default `30`)
+- `rank-gap` (default `50`)
+- `x`, `y` (default `0`)
+- optional `id`
+
+`diag:graph` child grammar (v1):
+- direct children must be `diag:node` or `diag:edge`
+- nested `diag:graph` is not supported
+
+`diag:node`:
+- required: `id`
+- optional: `width`, `min-width`, `padding`, `background-class`, `background-style`
+- content model follows flex-style content rendering
+
+`diag:edge`:
+- required: `from`, `to` (same-graph node ids)
+- optional: label attrs + standard stroke/presentation attrs + markers
+- self-edges are not supported in v1
+
+Layout algorithm (v1):
+1. DFS back-edge cycle breaking (temporary reversal)
+2. longest-path rank assignment
+3. median-based per-rank ordering (stable tie-break)
+4. rank/node spacing via `rank-gap` and `node-gap`
+5. one straight line segment per edge
+
+Graph guardrails (current defaults):
+- max nodes per graph: `2000`
+- max edges per graph: `8000`
+- if exceeded: `E_GRAPH_TOO_LARGE`
+
+## 5. ID and Scope Rules
+
+- IDs are globally unique within the compiled document tree
+- duplicate IDs are semantic errors
+- graph node IDs participate in global ID uniqueness checks
+- anchors share the same ID namespace as elements
+
+## 6. Compilation Order (High-level)
+
+1. parse XML + namespace detection
+2. expand templates (`diag:template` / `diag:instance`)
+3. expand includes (`diag:include`) with cycle/depth checks
+4. enforce unique IDs after include expansion
+5. expand graphs (`diag:graph` -> emitted groups/lines/labels)
+6. collect anchors/arrows
+7. render tree to pure SVG nodes
+8. resolve and emit `diag:arrow`
+9. compute bounds/viewBox/width/height and apply diagram background
+
+## 7. Error Model
+
+CLI exposes stable `E_*` codes.
+
+Common families:
+- Parse/args/runtime:
+  - `E_ARGS`, `E_PARSE_XML`, `E_INTERNAL`, `E_FOCUS_NOT_FOUND`
+- Semantic fallback:
+  - `E_SVGPP_SEMANTIC` (for uncoded semantic `ValueError`s)
+- Include:
+  - `E_INCLUDE_ARGS`, `E_INCLUDE_NOT_FOUND`, `E_INCLUDE_PARSE`, `E_INCLUDE_ROOT`, `E_INCLUDE_CYCLE`, `E_INCLUDE_DEPTH`, `E_INCLUDE_ID_COLLISION`
+- Graph:
+  - `E_GRAPH_ARGS`, `E_GRAPH_NODE_MISSING_ID`, `E_GRAPH_UNKNOWN_NODE`, `E_GRAPH_DUPLICATE_NODE`, `E_GRAPH_ID_COLLISION`, `E_GRAPH_CHILD_UNSUPPORTED`, `E_GRAPH_SELF_EDGE`, `E_GRAPH_NESTED_UNSUPPORTED`, `E_GRAPH_TOO_LARGE`
+
+## 8. Non-goals in v1
+
+- orthogonal edge routing / waypoints
+- graph clusters/subgraphs
+- graph port constraints
+- self-edge rendering for `diag:edge`
+- multiple graph layout algorithms
+- interactive/animated layout
+
+## 9. References
+
+Feature-specific v1 specs:
+- `specs/DIAGANCHOR.md`
+- `specs/DIAGINCLUDE.md`
+- `specs/DIAGGRAPH.md`
+
+Agent-oriented quick reference:
+- `AGENTS.md`
+
+This file is the consolidated overview; feature specs above contain deeper per-feature details and acceptance criteria.

@@ -30,8 +30,8 @@ bindings = "pyo3"
 # NOTE: Keep src/diagramagic/data/*.md in sync with root copies before building!
 # These docs are bundled so pip users can access them via --cheatsheet, etc.
 include = [
+    "PROJECTSPEC.md",
     "src/diagramagic/data/AGENTS.md",
-    "src/diagramagic/data/PROJECTSPEC.md",
     "src/diagramagic/data/README.md",
     "src/diagramagic/data/diagramagic_patterns.md",
     "src/diagramagic/data/diagramagic_prompt.txt",
