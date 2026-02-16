@@ -136,3 +136,46 @@
   </diag:graph>
 </diag:diagram>
 ```
+
+## 11) Hybrid graph + sections (recommended for dense architecture diagrams)
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex width="980" direction="column" gap="12">
+    <diag:flex width="980" padding="10" background-class="header"><text style="font-size:22px;font-weight:bold">Service Topology</text></diag:flex>
+    <diag:flex width="980" direction="row" gap="12">
+      <diag:flex width="720" padding="10" background-class="panel">
+        <diag:graph direction="LR" node-gap="18" rank-gap="44">
+          <diag:node id="gw" width="180" padding="8" background-class="svc"><text style="font-size:13px;font-weight:bold">API Gateway</text><text style="font-size:11px" diag:wrap="true">authn, rate limit, routing</text></diag:node>
+          <diag:node id="auth" width="180" padding="8" background-class="svc"><text style="font-size:13px;font-weight:bold">Auth</text><text style="font-size:11px" diag:wrap="true">JWT + session checks</text></diag:node>
+          <diag:node id="db" width="180" padding="8" background-class="db"><text style="font-size:13px;font-weight:bold">DB</text><text style="font-size:11px" diag:wrap="true">primary + read replica</text></diag:node>
+          <diag:edge from="gw" to="auth" label="verify"/>
+          <diag:edge from="auth" to="db" label="lookup"/>
+        </diag:graph>
+      </diag:flex>
+      <diag:flex width="248" padding="10" gap="8" direction="column" background-class="legend">
+        <text style="font-size:14px;font-weight:bold">Legend</text>
+        <text style="font-size:12px" diag:wrap="true">Use graph for topology, but keep context and annotations outside graph nodes when dense.</text>
+      </diag:flex>
+    </diag:flex>
+  </diag:flex>
+</diag:diagram>
+```
+
+## 12) Sequence diagram pattern (prefer anchors/arrows over graph)
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex width="920" direction="column" gap="10">
+    <diag:flex width="920" direction="row" gap="20">
+      <diag:flex id="lane_client" width="260" padding="8" background-class="lane"><text style="font-size:14px">Client</text></diag:flex>
+      <diag:flex id="lane_api" width="260" padding="8" background-class="lane"><text style="font-size:14px">API</text></diag:flex>
+      <diag:flex id="lane_db" width="260" padding="8" background-class="lane"><text style="font-size:14px">DB</text></diag:flex>
+    </diag:flex>
+    <diag:anchor id="c1" relative-to="lane_client" side="bottom" offset-y="40"/>
+    <diag:anchor id="a1" relative-to="lane_api" side="bottom" offset-y="40"/>
+    <diag:anchor id="d1" relative-to="lane_db" side="bottom" offset-y="80"/>
+    <diag:arrow from="c1" to="a1" label="POST /login"/>
+    <diag:arrow from="a1" to="d1" label="SELECT user"/>
+    <diag:arrow from="d1" to="a1" label="row data"/>
+  </diag:flex>
+</diag:diagram>
+```

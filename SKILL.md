@@ -26,15 +26,23 @@ Run these commands and use their output as your syntax reference:
 4. If incorrect, fix the source and render again
 5. When satisfied, run `diagramagic compile <file>.svg++` for final SVG
 
-## Rules
+## Quality Standard
+
+You are writing SVG. The `diag:` extensions handle layout and sizing — they do not replace your responsibility to create rich, detailed, information-dense diagrams. Write with the same visual quality and detail you would if generating raw SVG. The `diag:` features save you from coordinate math, not from doing the actual design work.
+
+## Layout Rules
 
 - Use `<diag:diagram>` root with `xmlns="http://www.w3.org/2000/svg"` and `xmlns:diag="https://diagramagic.ai/ns"`
-- Prefer `diag:flex` over manual coordinates for stacks/rows
-- Use `diag:graph` for flowcharts and dependency diagrams (3+ connected nodes)
+- Use `diag:flex` for layout structure (stacks, rows, grids of cards) — but fill those containers with rich, detailed content
+- Use `diag:graph` for auto-layout when topology matters (flowcharts, dependency graphs) — but treat it as scaffolding, not the complete design
+- Keep graph nodes content-rich (title + details), not just single-line labels
+- If graph output gets crowded, split into multiple subgraphs with `diag:include` or switch to a hybrid flex + arrows structure
 - Use `diag:wrap="true"` on `<text>` for multi-line text (wrapping is a text feature, not a `diag:node` feature)
 - Use `diag:arrow` with `id`-tagged elements for connectors
 - Use `diag:anchor` for precise named points (sequence diagrams, etc.)
 - Use `diag:include` to compose large diagrams from sub-files
+- Use `diag:template` when you have 3+ visually identical elements (e.g., entity cards, service boxes)
+- Mix raw SVG freely: `<rect>`, `<line>`, `<circle>`, `<path>` for decorative elements, region backgrounds, custom shapes
 - Do NOT stop at first compile — iterate until the render matches intent
 
 ## Error Recovery

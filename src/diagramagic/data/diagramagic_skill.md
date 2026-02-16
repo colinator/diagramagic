@@ -47,7 +47,16 @@ Do not stop at first compile success; iterate until the rendered result matches 
 - Use `id` on elements that arrows or focus operations target.
 - Use `<diag:arrow from="..." to="...">` for connectors.
 - Keep non-`diag:` SVG attributes untouched unless intentionally changed.
-- If the request is a flowchart/architecture/dependency layout, start with `<diag:graph>` + `<diag:node>`/`<diag:edge>` before considering manual coordinates.
+- If topology/ranking is the core problem, use `<diag:graph>` + `<diag:node>`/`<diag:edge>` for structure.
+- Treat `diag:graph` as scaffolding, not the full design: still use normal SVG/flex for titles, regions, legends, and contextual annotations.
+- Keep graph nodes content-rich (title + supporting text) instead of single-token labels when detail matters.
+- If graph layout is cluttered, split into multiple subgraphs with `diag:include` or use a hybrid flex + arrows composition.
+
+## Quality bar
+
+- Use the same attention to detail you would use in raw SVG (spacing, hierarchy, labels, visual grouping).
+- Do not stop at “technically correct” topology; optimize for readability at first glance.
+- After each render, check for overlaps, cramped labels, and ambiguous edge paths before finalizing.
 
 ## Error recovery policy
 
@@ -62,4 +71,5 @@ Do not stop at first compile success; iterate until the rendered result matches 
 
 - Do not use bare `diagramagic file.svg++` (subcommands are required).
 - Do not write PNG with `compile`; use `render`.
+- Do not treat `diag:graph` as a one-shot substitute for visual design.
 - Do not assume output is correct without visual render checks.

@@ -223,7 +223,7 @@ Use `diag:graph` when the structure is node-and-edge oriented (flowchart, archit
 </diag:diagram>
 ```
 
-- Prefer `diag:graph` over manual `x`/`y` when there are 3+ connected boxes.
+- Use `diag:graph` when topology/ranking is the hard part; do not use it as a substitute for full visual design.
 - `diag:edge` impacts layout; `diag:arrow` does not.
 - `diag:graph` cannot be nested in another `diag:graph` in v1.
 
@@ -342,6 +342,10 @@ diagramagic compile tcp.svg++ > tcp.svg
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
 - For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
+- Keep node content rich: favor title + supporting text over one-word boxes on complex diagrams.
+- Treat `diag:graph` as scaffolding and keep using plain SVG/flex for section frames, legends, and annotation layers.
+- If graph output is crowded, split into subgraphs with `diag:include` or use hybrid flex + arrow layouts.
+- Quality gate before final output: no overlaps, no clipped/garbled text, and clear visual hierarchy at first glance.
 - For a quick reference, run `diagramagic cheatsheet` to display this guide.
 - For full agent operating guidance, run `diagramagic skill`.
 
