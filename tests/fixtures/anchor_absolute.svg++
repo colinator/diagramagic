@@ -1,0 +1,11 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .node { fill:#eef2ff; stroke:#4338ca; stroke-width:1; }
+    .label { font-size:13px; }
+  </style>
+  <diag:flex x="30" y="40" width="140" padding="10" background-class="node"><text class="label">A</text></diag:flex>
+  <diag:flex x="260" y="40" width="140" padding="10" background-class="node"><text class="label">B</text></diag:flex>
+  <diag:anchor id="a_mid" x="170" y="65"/>
+  <diag:anchor id="b_mid" x="260" y="65"/>
+  <diag:arrow from="a_mid" to="b_mid" label="abs" stroke="#4338ca"/>
+</diag:diagram>

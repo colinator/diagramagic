@@ -73,3 +73,18 @@
   <diag:arrow from="auth" to="db" label="queries" stroke="#e67e22" stroke-width="1.5"/>
 </diag:diagram>
 ```
+
+## 7) Sequence-style anchors + arrows
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex id="client_lane" x="20" y="20" width="180" padding="10" background-class="card">
+    <text>Client</text>
+  </diag:flex>
+  <diag:flex id="server_lane" x="320" y="20" width="180" padding="10" background-class="card">
+    <text>Server</text>
+  </diag:flex>
+  <diag:anchor id="c_t1" relative-to="client_lane" side="bottom" offset-y="40"/>
+  <diag:anchor id="s_t1" relative-to="server_lane" side="bottom" offset-y="40"/>
+  <diag:arrow from="c_t1" to="s_t1" label="SYN"/>
+</diag:diagram>
+```

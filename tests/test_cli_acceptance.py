@@ -433,6 +433,90 @@ class CLIAcceptanceTests(unittest.TestCase):
         top_level_lines = [child for child in list(root) if child.tag == "{http://www.w3.org/2000/svg}line"]
         self.assertEqual(top_level_lines, [])
 
+    def test_arrow_accepts_absolute_anchor_endpoints(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:anchor id="a1" x="40" y="80"/>
+  <diag:anchor id="a2" x="220" y="80"/>
+  <diag:arrow from="a1" to="a2" stroke="#111"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        line = root.find(".//{http://www.w3.org/2000/svg}line")
+        self.assertIsNotNone(line)
+        self.assertAlmostEqual(float(line.get("x1")), 40.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y1")), 80.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("x2")), 220.0, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y2")), 80.0, delta=0.01)
+
+    def test_arrow_accepts_relative_anchor_and_mixed_endpoints(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="box" x="20" y="20" width="120" height="40" fill="none" stroke="#111"/>
+  <diag:anchor id="right_mid" relative-to="box" side="right" offset-x="10"/>
+  <diag:arrow from="box" to="right_mid" stroke="#111"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        line = root.find(".//{http://www.w3.org/2000/svg}line")
+        self.assertIsNotNone(line)
+        # relative-to right mid is (~140.5,40), then offset-x 10 => (~150.5,40)
+        self.assertAlmostEqual(float(line.get("x2")), 150.5, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y2")), 40.0, delta=0.01)
+        # from element should start on right border toward anchor
+        self.assertAlmostEqual(float(line.get("x1")), 140.5, delta=0.01)
+        self.assertAlmostEqual(float(line.get("y1")), 40.0, delta=0.01)
+
+    def test_anchor_validation_and_target_errors(self) -> None:
+        missing_mode = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:anchor id="a"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", missing_mode])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+        mixed_mode = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="box" x="0" y="0" width="10" height="10"/>
+  <diag:anchor id="a" x="10" y="10" relative-to="box"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", mixed_mode])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+        missing_target = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:anchor id="a" relative-to="missing"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", missing_target])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
+    def test_anchor_duplicate_ids_from_templates_are_rejected(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:template name="lane">
+    <diag:flex width="120" padding="8">
+      <text style="font-size:12px">Lane</text>
+    </diag:flex>
+    <diag:anchor id="shared_anchor" x="20" y="20"/>
+  </diag:template>
+  <diag:instance template="lane" x="20" y="20"/>
+  <diag:instance template="lane" x="220" y="20"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
+
 
 if __name__ == "__main__":
     unittest.main()

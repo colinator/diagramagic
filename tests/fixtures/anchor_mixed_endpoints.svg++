@@ -1,0 +1,11 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .left { fill:#f0fdf4; stroke:#15803d; stroke-width:1; }
+    .right { fill:#fef2f2; stroke:#b91c1c; stroke-width:1; }
+    .label { font-size:13px; }
+  </style>
+  <diag:flex id="src" x="30" y="50" width="170" padding="10" background-class="left"><text class="label">Source</text></diag:flex>
+  <diag:flex id="dst" x="300" y="180" width="170" padding="10" background-class="right"><text class="label">Destination</text></diag:flex>
+  <diag:anchor id="dst_top" relative-to="dst" side="top" offset-y="-20"/>
+  <diag:arrow from="src" to="dst_top" label="mixed" stroke="#166534"/>
+</diag:diagram>

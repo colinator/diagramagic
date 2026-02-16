@@ -33,9 +33,13 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 - `<diag:diagram>` — root container. Accepts normal `<svg>` attributes (`width`, `height`, `viewBox`, styles), but **all are optional**—the renderer auto-calculates size and viewBox from content bounds. Optional `diag:font-family` / `diag:font-path` apply to all descendants. `diag:background` fills the canvas (defaults to white; use `none` to stay transparent). `diag:padding` adds symmetrical padding around content (defaults to 0).
 - `<diag:flex>` — column/row layout block.
 - `<diag:arrow>` — connector between two elements by `id`.
-  - Required attributes: `from`, `to` (element ids).
+  - Required attributes: `from`, `to` (element or anchor ids).
   - Optional attributes: `label`, `label-size`, `label-fill`, standard SVG stroke/presentation attributes (`stroke`, `stroke-width`, `stroke-dasharray`, etc.), and optional `marker-end`/`marker-start`.
   - Endpoints are chosen automatically via center-line intersection with each target bbox.
+- `<diag:anchor>` — invisible named coordinate point.
+  - Required: `id`.
+  - Position mode: absolute (`x` + `y`) or relative (`relative-to` + optional `side="top|bottom|left|right|center"`).
+  - Optional offsets: `offset-x`, `offset-y`.
 - `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
 - `<diag:flex>` children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
 - `<diag:flex>` width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
@@ -62,6 +66,12 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | `label-fill` | No | `#555` | color | Label text color |
 | `marker-end`, `marker-start` | No | auto `marker-end` | marker URL | If omitted, default arrowhead is added to marker-end |
 | stroke/presentation attrs | No | SVG defaults | SVG units | Passed through to emitted `<line>` |
+| **diag:anchor** | | | | |
+| `id` | Yes | — | id string | Anchor id in global id namespace |
+| `x`, `y` | Absolute mode | — | pixels | Use both for absolute anchor mode |
+| `relative-to` | Relative mode | — | id string | Target element id for relative anchor mode |
+| `side` | No | `center` | — | `top`, `bottom`, `left`, `right`, `center` |
+| `offset-x`, `offset-y` | No | `0` | pixels | Applied after base anchor position |
 | **text** | | | | |
 | `diag:wrap` | No | `"false"` | — | Set `"true"` to enable line wrapping |
 | `diag:max-width` | No | container width | pixels | Override wrap width for this text element |
@@ -139,9 +149,24 @@ Use arrows to connect rendered elements by id:
 ```
 
 - `from` / `to` must reference element `id` attributes in the final diagram.
+- `from` / `to` may reference either element ids or anchor ids.
 - Endpoints are selected automatically via center-line intersection with each element bbox.
+- If an endpoint is an anchor id, that endpoint uses the exact anchor coordinate.
 - Optional arrow attrs: `label`, `label-size`, `label-fill`, plus standard SVG stroke/presentation attrs.
 - If no marker attributes are specified, a default arrowhead is added to `marker-end`.
+
+## Anchors
+
+Use anchors to define precise named points:
+
+```xml
+<diag:anchor id="client_mid" relative-to="client_box" side="right" offset-x="8"/>
+<diag:arrow from="client_mid" to="server_box" label="SYN"/>
+```
+
+- Anchors are invisible (no emitted SVG node).
+- Position mode is either absolute (`x`+`y`) or relative (`relative-to` + optional `side`).
+- Anchor ids share the global id namespace (duplicates are errors).
 
 ## Common Patterns
 

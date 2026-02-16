@@ -1,0 +1,10 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .node { fill:#fff7ed; stroke:#c2410c; stroke-width:1; }
+    .label { font-size:13px; }
+  </style>
+  <diag:flex id="core" x="120" y="100" width="180" padding="10" background-class="node"><text class="label">Core Node</text></diag:flex>
+  <diag:anchor id="top_off" relative-to="core" side="top" offset-y="-30"/>
+  <diag:anchor id="bottom_off" relative-to="core" side="bottom" offset-y="30"/>
+  <diag:arrow from="top_off" to="bottom_off" label="offsets" stroke="#c2410c"/>
+</diag:diagram>

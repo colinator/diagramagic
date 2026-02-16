@@ -1,0 +1,10 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="16">
+  <style>
+    .node { fill:#ecfeff; stroke:#0891b2; stroke-width:1; }
+    .label { font-size:13px; }
+  </style>
+  <diag:flex id="box" x="80" y="60" width="170" padding="10" background-class="node"><text class="label">Anchor Target</text></diag:flex>
+  <diag:anchor id="left_pt" relative-to="box" side="left"/>
+  <diag:anchor id="right_pt" relative-to="box" side="right"/>
+  <diag:arrow from="left_pt" to="right_pt" label="across" stroke="#0e7490"/>
+</diag:diagram>

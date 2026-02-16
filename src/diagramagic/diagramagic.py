@@ -58,6 +58,17 @@ class _ArrowSpec:
     passthrough_attrs: Dict[str, str]
 
 
+@dataclass
+class _AnchorSpec:
+    anchor_id: str
+    x: Optional[float]
+    y: Optional[float]
+    relative_to: Optional[str]
+    side: str
+    offset_x: float
+    offset_y: float
+
+
 class _TextMeasurer:
     """Caches Pillow fonts and exposes width/line height helpers."""
 
@@ -260,6 +271,7 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
     templates.update(_collect_templates(root, diag_ns))
     if templates:
         _expand_instances_in_tree(root, diag_ns, templates)
+    anchor_specs = _collect_anchors(root, diag_ns)
     arrow_specs = _collect_arrows(root, diag_ns)
 
     svg_root = ET.Element(_q("svg"))
@@ -277,8 +289,8 @@ def diagramagic(svgpp_source: str, shared_template_sources: Optional[List[str]] 
         if rendered is not None:
             svg_root.append(rendered)
 
-    if arrow_specs:
-        _emit_arrows(svg_root, arrow_specs)
+    if arrow_specs or anchor_specs:
+        _emit_arrows(svg_root, arrow_specs, anchor_specs)
 
     _apply_resvg_bounds(svg_root, original_width, original_height, diag_font_paths, diagram_padding)
     _apply_background_rect(root, svg_root, diag_ns)
@@ -731,7 +743,58 @@ def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
     return arrows
 
 
-def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
+def _collect_anchors(root: ET.Element, diag_ns: str) -> List[_AnchorSpec]:
+    anchors: List[_AnchorSpec] = []
+    for node in root.iter():
+        if _namespace_of(node.tag) != diag_ns or _local_name(node.tag) != "anchor":
+            continue
+
+        anchor_id = (node.get("id") or "").strip()
+        if not anchor_id:
+            raise ValueError("diag:anchor requires non-empty 'id' attribute")
+
+        x = _parse_length(node.get("x"), None)
+        y = _parse_length(node.get("y"), None)
+        relative_to = (node.get("relative-to") or "").strip() or None
+        side = (node.get("side") or "center").strip().lower()
+        offset_x = _parse_length(node.get("offset-x"), 0.0) or 0.0
+        offset_y = _parse_length(node.get("offset-y"), 0.0) or 0.0
+
+        has_abs = x is not None or y is not None
+        has_rel = relative_to is not None
+        if has_abs and has_rel:
+            raise ValueError(
+                f'diag:anchor id="{anchor_id}" cannot combine absolute (x/y) and relative-to modes'
+            )
+        if not has_abs and not has_rel:
+            raise ValueError(
+                f'diag:anchor id="{anchor_id}" requires either x/y or relative-to'
+            )
+        if has_abs and (x is None or y is None):
+            raise ValueError(
+                f'diag:anchor id="{anchor_id}" absolute mode requires both x and y'
+            )
+        if side not in {"top", "bottom", "left", "right", "center"}:
+            raise ValueError(
+                f'diag:anchor id="{anchor_id}" side must be one of top|bottom|left|right|center'
+            )
+
+        anchors.append(
+            _AnchorSpec(
+                anchor_id=anchor_id,
+                x=x,
+                y=y,
+                relative_to=relative_to,
+                side=side,
+                offset_x=offset_x,
+                offset_y=offset_y,
+            )
+        )
+
+    return anchors
+
+
+def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec], anchors: List[_AnchorSpec]) -> None:
     svg_text = ET.tostring(svg_root, encoding="unicode")
     measurement = _measure_svg(svg_text, [])
     nodes = measurement.get("nodes") or []
@@ -753,6 +816,37 @@ def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
             continue
         seen_ids[node_id] = seen_ids.get(node_id, 0) + 1
 
+    anchor_counts: Dict[str, int] = {}
+    for anchor in anchors:
+        anchor_counts[anchor.anchor_id] = anchor_counts.get(anchor.anchor_id, 0) + 1
+    for anchor_id, count in anchor_counts.items():
+        if count > 1:
+            raise ValueError(f'diag:anchor id="{anchor_id}" is duplicated')
+        if seen_ids.get(anchor_id, 0) > 0:
+            raise ValueError(f'diag:anchor id="{anchor_id}" collides with an existing element id')
+
+    anchor_points: Dict[str, Tuple[float, float]] = {}
+    for anchor in anchors:
+        if anchor.relative_to:
+            if seen_ids.get(anchor.relative_to, 0) == 0:
+                raise ValueError(
+                    f'diag:anchor id="{anchor.anchor_id}" relative-to="{anchor.relative_to}" id not found'
+                )
+            if seen_ids.get(anchor.relative_to, 0) > 1:
+                raise ValueError(
+                    f'diag:anchor id="{anchor.anchor_id}" relative-to="{anchor.relative_to}" is duplicated'
+                )
+            target_bbox = bbox_by_id.get(anchor.relative_to)
+            if target_bbox is None:
+                raise ValueError(
+                    f'diag:anchor id="{anchor.anchor_id}" relative-to="{anchor.relative_to}" has no measurable bbox'
+                )
+            px, py = _anchor_point_from_bbox(target_bbox, anchor.side)
+        else:
+            assert anchor.x is not None and anchor.y is not None
+            px, py = anchor.x, anchor.y
+        anchor_points[anchor.anchor_id] = (px + anchor.offset_x, py + anchor.offset_y)
+
     default_marker_id: Optional[str] = None
     parent_by_node: Dict[ET.Element, ET.Element] = {}
     slot_nodes: Dict[str, ET.Element] = {}
@@ -764,23 +858,41 @@ def _emit_arrows(svg_root: ET.Element, arrows: List[_ArrowSpec]) -> None:
             slot_nodes[slot_id] = parent
 
     for arrow in arrows:
-        if seen_ids.get(arrow.from_id, 0) == 0:
-            raise ValueError(f'diag:arrow from="{arrow.from_id}" id not found')
-        if seen_ids.get(arrow.to_id, 0) == 0:
-            raise ValueError(f'diag:arrow to="{arrow.to_id}" id not found')
-        if seen_ids.get(arrow.from_id, 0) > 1:
-            raise ValueError(f'diag:arrow from="{arrow.from_id}" is duplicated')
-        if seen_ids.get(arrow.to_id, 0) > 1:
-            raise ValueError(f'diag:arrow to="{arrow.to_id}" is duplicated')
+        from_anchor = anchor_points.get(arrow.from_id)
+        to_anchor = anchor_points.get(arrow.to_id)
 
-        from_bbox = bbox_by_id.get(arrow.from_id)
-        to_bbox = bbox_by_id.get(arrow.to_id)
-        if from_bbox is None:
-            raise ValueError(f'diag:arrow from="{arrow.from_id}" has no measurable bbox')
-        if to_bbox is None:
-            raise ValueError(f'diag:arrow to="{arrow.to_id}" has no measurable bbox')
+        from_bbox: Optional[Tuple[float, float, float, float]] = None
+        to_bbox: Optional[Tuple[float, float, float, float]] = None
+        if from_anchor is None:
+            if seen_ids.get(arrow.from_id, 0) == 0:
+                raise ValueError(f'diag:arrow from="{arrow.from_id}" id not found')
+            if seen_ids.get(arrow.from_id, 0) > 1:
+                raise ValueError(f'diag:arrow from="{arrow.from_id}" is duplicated')
+            from_bbox = bbox_by_id.get(arrow.from_id)
+            if from_bbox is None:
+                raise ValueError(f'diag:arrow from="{arrow.from_id}" has no measurable bbox')
 
-        p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+        if to_anchor is None:
+            if seen_ids.get(arrow.to_id, 0) == 0:
+                raise ValueError(f'diag:arrow to="{arrow.to_id}" id not found')
+            if seen_ids.get(arrow.to_id, 0) > 1:
+                raise ValueError(f'diag:arrow to="{arrow.to_id}" is duplicated')
+            to_bbox = bbox_by_id.get(arrow.to_id)
+            if to_bbox is None:
+                raise ValueError(f'diag:arrow to="{arrow.to_id}" has no measurable bbox')
+
+        if from_anchor is not None and to_anchor is not None:
+            p_from, p_to = from_anchor, to_anchor
+        elif from_anchor is not None and to_bbox is not None:
+            p_from = from_anchor
+            p_to = _point_on_bbox_toward(to_bbox, from_anchor)
+        elif to_anchor is not None and from_bbox is not None:
+            p_from = _point_on_bbox_toward(from_bbox, to_anchor)
+            p_to = to_anchor
+        else:
+            assert from_bbox is not None and to_bbox is not None
+            p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+
         target_container = slot_nodes.get(arrow.slot_id, svg_root)
         local_from, local_to = p_from, p_to
         if target_container is not svg_root:
@@ -1002,6 +1114,33 @@ def _emit_arrow_label(
 def _bbox_center(bbox: Tuple[float, float, float, float]) -> Tuple[float, float]:
     left, top, right, bottom = bbox
     return (left + right) / 2.0, (top + bottom) / 2.0
+
+
+def _anchor_point_from_bbox(
+    bbox: Tuple[float, float, float, float], side: str
+) -> Tuple[float, float]:
+    left, top, right, bottom = bbox
+    mid_x = (left + right) / 2.0
+    mid_y = (top + bottom) / 2.0
+    if side == "top":
+        return (mid_x, top)
+    if side == "bottom":
+        return (mid_x, bottom)
+    if side == "left":
+        return (left, mid_y)
+    if side == "right":
+        return (right, mid_y)
+    return (mid_x, mid_y)
+
+
+def _point_on_bbox_toward(
+    bbox: Tuple[float, float, float, float], toward: Tuple[float, float]
+) -> Tuple[float, float]:
+    center = _bbox_center(bbox)
+    point = _ray_rect_intersection(center, toward, bbox)
+    if point is not None:
+        return point
+    return center
 
 
 def _edge_segment(
