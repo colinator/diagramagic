@@ -1,6 +1,8 @@
 # diagramagic
 
-svg++ reference renderer for humans and LLMs.
+svg++ reference renderer built primarily for LLM-driven diagram authoring.
+
+Humans can use it directly, but the design target is agent workflows that need deterministic, editable, text-first diagram generation.
 
 Feed it svg++ input and it emits plain SVG: no runtime, no proprietary viewer.
 
@@ -16,13 +18,13 @@ What is svg++? It is standard SVG plus a small set of `diag:` layout/composition
 
 LLMs already have strong SVG muscle memory: tags, attributes, groups, styles, and transforms.
 
-svg++ keeps that familiar base and adds only a few high-leverage primitives for the parts models usually get wrong in raw SVG:
+svg++ is intentionally LLM-first: keep the familiar SVG surface area, then add a few high-leverage primitives for the parts models usually get wrong in raw SVG:
 - layout without manual coordinate math
 - wrapped text that measures correctly
 - graph placement/routing from node+edge intent
 - reusable templates and compile-time includes
 
-This keeps prompting simple, keeps edits local, and still compiles down to plain SVG for portability.
+Result: prompts stay short, edits stay local, and the generated output remains portable plain SVG.
 
 ## Installation
 
@@ -66,6 +68,15 @@ Typical authoring loop:
 3. Render to `.png` with `diagramagic render ...`
 4. Inspect output (human or agent)
 5. Adjust source and repeat
+
+## Claude Skill Install
+
+If you use Claude Code skills, install this repo's `SKILL.md` like this:
+
+```bash
+mkdir -p ~/.claude/skills/diagramagic
+cp SKILL.md ~/.claude/skills/diagramagic/SKILL.md
+```
 
 ## svg++ Tags
 
