@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.5 107.969 231" width="107.969" height="231">
+  <rect x="-20.5" y="-20.5" width="107.969" height="231" fill="#fff" />
+  <style>
+    .node { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:4; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <line x1="33.484" y1="34" x2="33.484" y2="78" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="33.484" y1="112" x2="33.484" y2="156" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <g id="tb_start" transform="translate(9.758, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="47.453" height="34" class="node" />
+        <g transform="translate(10, 10)">
+          <text style="font-size:13px" font-family="sans-serif" y="11">Start</text>
+        </g>
+      </g>
+    </g>
+    <g id="tb_process" transform="translate(0, 78)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="66.969" height="34" class="node" />
+        <g transform="translate(10, 10)">
+          <text style="font-size:13px" font-family="sans-serif" y="11">Process</text>
+        </g>
+      </g>
+    </g>
+    <g id="tb_end" transform="translate(7.938, 156)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="51.094" height="34" class="node" />
+        <g transform="translate(10, 10)">
+          <text style="font-size:13px" font-family="sans-serif" y="11">Done</text>
+        </g>
+      </g>
+    </g>
+    <text x="27.484" y="56" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" font-family="sans-serif">step</text>
+  </g>
+</svg>

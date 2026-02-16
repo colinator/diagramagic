@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -372,6 +373,177 @@ class CLIAcceptanceTests(unittest.TestCase):
             code, _out, _png, err = self.run_cli(["compile", str(Path(td) / "n0.svg++")])
             self.assertEqual(code, 3)
             self.assertIn("E_INCLUDE_DEPTH", err)
+
+    def test_graph_basic_layout_and_edge_rendering(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph direction="TB" node-gap="24" rank-gap="36">
+    <diag:node id="start" padding="10"><text style="font-size:12px">Start</text></diag:node>
+    <diag:node id="work" padding="10"><text style="font-size:12px">Work</text></diag:node>
+    <diag:node id="done" padding="10"><text style="font-size:12px">Done</text></diag:node>
+    <diag:edge from="start" to="work" label="step1"/>
+    <diag:edge from="work" to="done" stroke-dasharray="4 2"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        self.assertNotIn("diag:graph", out)
+        root = ET.fromstring(out)
+        self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='start']"))
+        self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='work']"))
+        self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='done']"))
+        lines = root.findall(".//{http://www.w3.org/2000/svg}line")
+        self.assertEqual(len(lines), 2)
+        self.assertTrue((lines[0].get("marker-end") or "").startswith("url(#diag-graph-arrow-default-"))
+        labels = root.findall(".//{http://www.w3.org/2000/svg}text")
+        self.assertTrue(any((t.text or "").strip() == "step1" for t in labels))
+
+    def test_graph_direction_rl_positions_ranks_right_to_left(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph direction="RL">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        a = root.find(".//{http://www.w3.org/2000/svg}g[@id='a']")
+        b = root.find(".//{http://www.w3.org/2000/svg}g[@id='b']")
+        self.assertIsNotNone(a)
+        self.assertIsNotNone(b)
+        ax = float(re.search(r"translate\(([-0-9.]+),", a.get("transform")).group(1))
+        bx = float(re.search(r"translate\(([-0-9.]+),", b.get("transform")).group(1))
+        self.assertLess(bx, ax)
+
+    def test_graph_unknown_node_error(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="ok"><text style="font-size:12px">OK</text></diag:node>
+    <diag:edge from="ok" to="missing"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_UNKNOWN_NODE", err)
+
+    def test_graph_duplicate_and_collision_errors(self) -> None:
+        dup_src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="dup"><text style="font-size:12px">One</text></diag:node>
+    <diag:node id="dup"><text style="font-size:12px">Two</text></diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", dup_src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_DUPLICATE_NODE", err)
+
+        collision_src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="taken" x="0" y="0" width="20" height="20"/>
+  <diag:graph>
+    <diag:node id="taken"><text style="font-size:12px">X</text></diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", collision_src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_ID_COLLISION", err)
+
+    def test_graph_self_edge_child_and_nested_errors(self) -> None:
+        self_edge = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:edge from="a" to="a"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", self_edge])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_SELF_EDGE", err)
+
+        bad_child = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:anchor id="k" x="0" y="0"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", bad_child])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_CHILD_UNSUPPORTED", err)
+
+        nested = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:graph>
+      <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    </diag:graph>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", nested])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_NESTED_UNSUPPORTED", err)
+
+    def test_graph_in_flex_and_determinism(self) -> None:
+        with_graph = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex width="280" padding="10" gap="8">
+    <diag:graph>
+      <diag:node id="n1"><text style="font-size:12px">Node One</text></diag:node>
+      <diag:node id="n2"><text style="font-size:12px">Node Two</text></diag:node>
+      <diag:edge from="n1" to="n2"/>
+    </diag:graph>
+    <text style="font-size:12px">After graph</text>
+  </diag:flex>
+</diag:diagram>
+""".strip()
+        no_graph = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:flex width="280" padding="10" gap="8">
+    <text style="font-size:12px">After graph</text>
+  </diag:flex>
+</diag:diagram>
+""".strip()
+        code, out1, _png, err = self.run_cli(["compile", "--text", with_graph, "--stdout"])
+        self.assertEqual(code, 0, err)
+        code, out2, _png, err = self.run_cli(["compile", "--text", no_graph, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root1 = ET.fromstring(out1)
+        root2 = ET.fromstring(out2)
+        self.assertGreater(float(root1.get("height")), float(root2.get("height")))
+
+        code, repeat, _png, err = self.run_cli(["compile", "--text", with_graph, "--stdout"])
+        self.assertEqual(code, 0, err)
+        self.assertEqual(out1, repeat)
+
+    def test_graph_too_large_error(self) -> None:
+        parts = [
+            '<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">',
+            "<diag:graph>",
+        ]
+        for i in range(2001):
+            parts.append(
+                f'<diag:node id="n{i}"><text style="font-size:12px">N{i}</text></diag:node>'
+            )
+        parts.append("</diag:graph>")
+        parts.append("</diag:diagram>")
+        src = "".join(parts)
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_TOO_LARGE", err)
 
     def test_accepts_multiple_diag_namespace_uris(self) -> None:
         with tempfile.TemporaryDirectory() as td:

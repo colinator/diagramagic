@@ -47,6 +47,7 @@ Do not stop at first compile success; iterate until the rendered result matches 
 - Use `id` on elements that arrows or focus operations target.
 - Use `<diag:arrow from="..." to="...">` for connectors.
 - Keep non-`diag:` SVG attributes untouched unless intentionally changed.
+- If the request is a flowchart/architecture/dependency layout, start with `<diag:graph>` + `<diag:node>`/`<diag:edge>` before considering manual coordinates.
 
 ## Error recovery policy
 

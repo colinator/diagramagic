@@ -1,0 +1,14 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:flex width="620" direction="column" gap="14">
+    <diag:flex width="620" padding="10" background-style="fill:#f8f9fa;stroke:#adb5bd;stroke-width:1;rx:6">
+      <text style="font-size:18px;font-weight:bold">Graph In Flex</text>
+    </diag:flex>
+    <diag:graph direction="LR" node-gap="18" rank-gap="44">
+      <diag:node id="gf_a" padding="10" background-style="fill:#fff3bf;stroke:#f59f00;stroke-width:1;rx:5"><text style="font-size:12px">Ingress</text></diag:node>
+      <diag:node id="gf_b" padding="10" background-style="fill:#fff3bf;stroke:#f59f00;stroke-width:1;rx:5"><text style="font-size:12px">Service</text></diag:node>
+      <diag:node id="gf_c" padding="10" background-style="fill:#e7f5ff;stroke:#228be6;stroke-width:1;rx:5"><text style="font-size:12px">Store</text></diag:node>
+      <diag:edge from="gf_a" to="gf_b" label="request"/>
+      <diag:edge from="gf_b" to="gf_c" label="write"/>
+    </diag:graph>
+  </diag:flex>
+</diag:diagram>

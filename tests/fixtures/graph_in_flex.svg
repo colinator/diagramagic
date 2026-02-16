@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.5 661 127" width="661" height="127">
+  <rect x="-20.5" y="-20.5" width="661" height="127" fill="#fff" />
+  <g transform="translate(0, 0)">
+    <g transform="translate(0, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="620" height="39" style="fill:#f8f9fa;stroke:#adb5bd;stroke-width:1;rx:6" />
+        <g transform="translate(10, 10)">
+          <text style="font-size:18px;font-weight:bold" font-family="sans-serif" y="14">Graph In Flex</text>
+        </g>
+      </g>
+    </g>
+    <g transform="translate(0, 53)">
+      <g transform="translate(0, 0)">
+        <defs>
+          <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+          </marker>
+        </defs>
+        <line x1="59.344" y1="16.5" x2="103.344" y2="16.5" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+        <line x1="163.359" y1="16.5" x2="207.359" y2="16.5" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+        <g id="gf_a" transform="translate(0, 0)">
+          <g transform="translate(0, 0)">
+            <rect x="0" y="0" width="59.344" height="33" style="fill:#fff3bf;stroke:#f59f00;stroke-width:1;rx:5" />
+            <g transform="translate(10, 10)">
+              <text style="font-size:12px" font-family="sans-serif" y="10">Ingress</text>
+            </g>
+          </g>
+        </g>
+        <g id="gf_b" transform="translate(103.344, 0)">
+          <g transform="translate(0, 0)">
+            <rect x="0" y="0" width="60.016" height="33" style="fill:#fff3bf;stroke:#f59f00;stroke-width:1;rx:5" />
+            <g transform="translate(10, 10)">
+              <text style="font-size:12px" font-family="sans-serif" y="10">Service</text>
+            </g>
+          </g>
+        </g>
+        <g id="gf_c" transform="translate(207.359, 0)">
+          <g transform="translate(0, 0)">
+            <rect x="0" y="0" width="48.672" height="33" style="fill:#e7f5ff;stroke:#228be6;stroke-width:1;rx:5" />
+            <g transform="translate(10, 10)">
+              <text style="font-size:12px" font-family="sans-serif" y="10">Store</text>
+            </g>
+          </g>
+        </g>
+        <text x="81.344" y="22.5" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" font-family="sans-serif">request</text>
+        <text x="185.359" y="22.5" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" font-family="sans-serif">write</text>
+      </g>
+    </g>
+  </g>
+</svg>

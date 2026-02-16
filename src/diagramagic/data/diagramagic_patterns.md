@@ -100,3 +100,39 @@
   </diag:flex>
 </diag:diagram>
 ```
+
+## 9) Flowchart with diag:graph
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .box { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:4; }
+  </style>
+  <diag:graph direction="TB" node-gap="28" rank-gap="44">
+    <diag:node id="start" padding="10" background-class="box"><text style="font-size:13px">Start</text></diag:node>
+    <diag:node id="process" padding="10" background-class="box"><text style="font-size:13px">Process Data</text></diag:node>
+    <diag:node id="done" padding="10" background-class="box"><text style="font-size:13px">Done</text></diag:node>
+    <diag:edge from="start" to="process" label="step"/>
+    <diag:edge from="process" to="done"/>
+  </diag:graph>
+</diag:diagram>
+```
+
+## 10) Service dependency graph (LR)
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .svc { fill:#ffeaa7; stroke:#fdcb6e; stroke-width:1; rx:6; }
+    .db { fill:#dfe6e9; stroke:#636e72; stroke-width:1; rx:6; }
+  </style>
+  <diag:graph direction="LR" node-gap="20" rank-gap="52">
+    <diag:node id="client" padding="10" background-class="svc"><text style="font-size:12px">Client</text></diag:node>
+    <diag:node id="api" padding="10" background-class="svc"><text style="font-size:12px">API</text></diag:node>
+    <diag:node id="auth" padding="10" background-class="svc"><text style="font-size:12px">Auth</text></diag:node>
+    <diag:node id="db" padding="10" background-class="db"><text style="font-size:12px">Database</text></diag:node>
+    <diag:edge from="client" to="api" label="HTTPS"/>
+    <diag:edge from="api" to="auth" label="verify"/>
+    <diag:edge from="api" to="db" label="query"/>
+    <diag:edge from="auth" to="db" stroke-dasharray="4 2"/>
+  </diag:graph>
+</diag:diagram>
+```

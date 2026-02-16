@@ -1,0 +1,10 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph direction="LR" node-gap="24" rank-gap="40">
+    <diag:node id="cy_a" padding="10" background-style="fill:#eafaf1;stroke:#27ae60;stroke-width:1;rx:5"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="cy_b" padding="10" background-style="fill:#eafaf1;stroke:#27ae60;stroke-width:1;rx:5"><text style="font-size:12px">B</text></diag:node>
+    <diag:node id="cy_c" padding="10" background-style="fill:#eafaf1;stroke:#27ae60;stroke-width:1;rx:5"><text style="font-size:12px">C</text></diag:node>
+    <diag:edge from="cy_a" to="cy_b"/>
+    <diag:edge from="cy_b" to="cy_c"/>
+    <diag:edge from="cy_c" to="cy_a" stroke="#c0392b"/>
+  </diag:graph>
+</diag:diagram>

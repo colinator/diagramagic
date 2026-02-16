@@ -1,0 +1,12 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .node { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:4; }
+  </style>
+  <diag:graph direction="TB" node-gap="28" rank-gap="44">
+    <diag:node id="tb_start" padding="10" background-class="node"><text style="font-size:13px">Start</text></diag:node>
+    <diag:node id="tb_process" padding="10" background-class="node"><text style="font-size:13px">Process</text></diag:node>
+    <diag:node id="tb_end" padding="10" background-class="node"><text style="font-size:13px">Done</text></diag:node>
+    <diag:edge from="tb_start" to="tb_process" label="step"/>
+    <diag:edge from="tb_process" to="tb_end"/>
+  </diag:graph>
+</diag:diagram>

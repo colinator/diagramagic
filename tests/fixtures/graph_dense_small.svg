@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.5 113.5 255" width="113.5" height="255">
+  <rect x="-20.5" y="-20.5" width="113.5" height="255" fill="#fff" />
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <line x1="31.254" y1="28" x2="19.121" y2="62" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="41.246" y1="28" x2="53.379" y2="62" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="19.121" y1="90" x2="31.254" y2="124" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="53.379" y1="90" x2="41.246" y2="124" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="16.623" y1="90" x2="33.752" y2="186" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="55.877" y1="90" x2="38.748" y2="186" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <line x1="36.25" y1="152" x2="36.25" y2="186" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <g id="d1" transform="translate(22.125, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="28.25" height="28" style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4" />
+        <g transform="translate(8, 8)">
+          <text style="font-size:11px" font-family="sans-serif" y="9">d1</text>
+        </g>
+      </g>
+    </g>
+    <g id="d2" transform="translate(0, 62)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="28.25" height="28" style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4" />
+        <g transform="translate(8, 8)">
+          <text style="font-size:11px" font-family="sans-serif" y="9">d2</text>
+        </g>
+      </g>
+    </g>
+    <g id="d3" transform="translate(44.25, 62)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="28.25" height="28" style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4" />
+        <g transform="translate(8, 8)">
+          <text style="font-size:11px" font-family="sans-serif" y="9">d3</text>
+        </g>
+      </g>
+    </g>
+    <g id="d4" transform="translate(22.125, 124)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="28.25" height="28" style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4" />
+        <g transform="translate(8, 8)">
+          <text style="font-size:11px" font-family="sans-serif" y="9">d4</text>
+        </g>
+      </g>
+    </g>
+    <g id="d5" transform="translate(22.125, 186)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="28.25" height="28" style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4" />
+        <g transform="translate(8, 8)">
+          <text style="font-size:11px" font-family="sans-serif" y="9">d5</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

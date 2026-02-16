@@ -44,6 +44,11 @@ The diagram automatically sizes to fit your content—no need to specify `width`
   - Required: `src` (resolved relative to the including file).
   - Optional: `x`, `y`, `scale`, `id`.
   - Included content is opaque in v1; no cross-boundary ID references.
+- `<diag:graph>` — automatic node/edge layout for flowcharts and dependency graphs.
+  - Child elements: `<diag:node>` and `<diag:edge>` only.
+  - `diag:node` requires `id`; supports `width`, `min-width`, `padding`, `background-class`, `background-style`.
+  - `diag:edge` requires `from` + `to` (same-graph node ids); supports arrow-like stroke/label attributes.
+  - Layout attrs on graph: `direction="TB|BT|LR|RL"`, `node-gap`, `rank-gap`, optional `x`/`y` (top-level only).
 - `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
 - `<diag:flex>` children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
 - `<diag:flex>` width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
@@ -188,6 +193,39 @@ Use includes to compose large diagrams from sub-files:
 - `src` is resolved relative to the current file.
 - Include expansion happens at compile time (final SVG is flattened).
 - In v1, do not reference included internal IDs from the parent.
+
+## Graphs
+
+Use `diag:graph` when the structure is node-and-edge oriented (flowchart, architecture, dependency graph).
+
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20">
+  <style>
+    .box { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:4; }
+  </style>
+
+  <diag:graph direction="TB" node-gap="28" rank-gap="44">
+    <diag:node id="start" padding="10" background-class="box">
+      <text style="font-size:13px">Start</text>
+    </diag:node>
+    <diag:node id="process" padding="10" background-class="box">
+      <text style="font-size:13px">Process</text>
+    </diag:node>
+    <diag:node id="done" padding="10" background-class="box">
+      <text style="font-size:13px">Done</text>
+    </diag:node>
+
+    <diag:edge from="start" to="process" label="step"/>
+    <diag:edge from="process" to="done"/>
+  </diag:graph>
+</diag:diagram>
+```
+
+- Prefer `diag:graph` over manual `x`/`y` when there are 3+ connected boxes.
+- `diag:edge` impacts layout; `diag:arrow` does not.
+- `diag:graph` cannot be nested in another `diag:graph` in v1.
 
 ## Common Patterns
 

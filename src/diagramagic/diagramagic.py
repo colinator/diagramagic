@@ -7,7 +7,7 @@ import re
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from diagramagic._diagramagic_resvg import measure_svg as _measure_svg
@@ -41,6 +41,9 @@ GENERIC_FONT_FALLBACKS = {
         "DejaVu Sans Mono",
     ],
 }
+
+GRAPH_MAX_NODES = 2000
+GRAPH_MAX_EDGES = 8000
 
 
 class FocusNotFoundError(ValueError):
@@ -79,6 +82,33 @@ class _AnchorSpec:
     side: str
     offset_x: float
     offset_y: float
+
+
+@dataclass
+class _GraphNodeSpec:
+    node_id: str
+    source_node: ET.Element
+    rendered: ET.Element
+    width: float
+    height: float
+
+
+@dataclass
+class _GraphEdgeSpec:
+    from_id: str
+    to_id: str
+    label: Optional[str]
+    label_size: float
+    label_fill: str
+    passthrough_attrs: Dict[str, str]
+
+
+@dataclass
+class _GraphExpansionState:
+    non_graph_ids: Set[str]
+    taken_ids: Set[str]
+    seen_graph_node_ids: Set[str]
+    graph_counter: int = 0
 
 
 class _TextMeasurer:
@@ -303,6 +333,7 @@ def diagramagic(
     )
     if has_includes:
         _ensure_unique_ids(root)
+    _expand_graphs_in_tree(root, diag_ns)
     anchor_specs = _collect_anchors(root, diag_ns)
     arrow_specs = _collect_arrows(root, diag_ns)
 
@@ -328,6 +359,249 @@ def diagramagic(
     _apply_background_rect(root, svg_root, diag_ns)
 
     return _pretty_xml(svg_root)
+
+
+def _expand_graphs_in_tree(root: ET.Element, diag_ns: str) -> None:
+    state = _graph_expansion_state(root, diag_ns)
+
+    def _walk(node: ET.Element, *, inside_graph: bool) -> None:
+        new_children: List[ET.Element] = []
+        for child in list(node):
+            if child.tag is ET.Comment:
+                new_children.append(child)
+                continue
+            ns = _namespace_of(child.tag)
+            local = _local_name(child.tag)
+            if ns == diag_ns and local == "graph":
+                if inside_graph:
+                    raise DiagramagicSemanticError(
+                        "E_GRAPH_NESTED_UNSUPPORTED",
+                        "diag:graph cannot be nested inside another diag:graph in v1",
+                    )
+                state.graph_counter += 1
+                rendered_graph = _expand_single_graph(
+                    child, diag_ns, state, graph_index=state.graph_counter
+                )
+                new_children.append(rendered_graph)
+                continue
+            _walk(child, inside_graph=inside_graph or (ns == diag_ns and local == "graph"))
+            new_children.append(child)
+        node[:] = new_children
+
+    _walk(root, inside_graph=False)
+
+
+def _graph_expansion_state(root: ET.Element, diag_ns: str) -> _GraphExpansionState:
+    non_graph_ids: Set[str] = set()
+    taken_ids: Set[str] = set()
+
+    def _walk(node: ET.Element, *, inside_graph: bool) -> None:
+        node_id = node.get("id")
+        if node_id:
+            taken_ids.add(node_id)
+            ns = _namespace_of(node.tag)
+            local = _local_name(node.tag)
+            if not (inside_graph and ns == diag_ns and local == "node"):
+                non_graph_ids.add(node_id)
+        for child in list(node):
+            if child.tag is ET.Comment:
+                continue
+            ns = _namespace_of(child.tag)
+            local = _local_name(child.tag)
+            child_inside_graph = inside_graph or (ns == diag_ns and local == "graph")
+            _walk(child, inside_graph=child_inside_graph)
+
+    _walk(root, inside_graph=False)
+    return _GraphExpansionState(
+        non_graph_ids=non_graph_ids,
+        taken_ids=taken_ids,
+        seen_graph_node_ids=set(),
+    )
+
+
+def _expand_single_graph(
+    graph_node: ET.Element,
+    diag_ns: str,
+    state: _GraphExpansionState,
+    *,
+    graph_index: int,
+) -> ET.Element:
+    direction = (graph_node.get("direction") or "TB").strip().upper()
+    if direction not in {"TB", "BT", "LR", "RL"}:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            f'diag:graph has invalid direction="{graph_node.get("direction")}"',
+        )
+    node_gap = _parse_graph_nonnegative_length(
+        graph_node, "node-gap", 30.0, error_code="E_GRAPH_ARGS"
+    )
+    rank_gap = _parse_graph_nonnegative_length(
+        graph_node, "rank-gap", 50.0, error_code="E_GRAPH_ARGS"
+    )
+    x = _parse_graph_number(graph_node, "x", 0.0, error_code="E_GRAPH_ARGS")
+    y = _parse_graph_number(graph_node, "y", 0.0, error_code="E_GRAPH_ARGS")
+
+    nodes: List[_GraphNodeSpec] = []
+    node_by_id: Dict[str, _GraphNodeSpec] = {}
+    edges: List[_GraphEdgeSpec] = []
+
+    for child in list(graph_node):
+        if child.tag is ET.Comment:
+            continue
+        ns = _namespace_of(child.tag)
+        local = _local_name(child.tag)
+        if ns != diag_ns:
+            raise DiagramagicSemanticError(
+                "E_GRAPH_CHILD_UNSUPPORTED",
+                f"unsupported child <{local}> under <diag:graph>; only diag:node and diag:edge are allowed",
+            )
+        if local == "node":
+            node_spec = _collect_graph_node(child, diag_ns)
+            if node_spec.node_id in node_by_id:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_DUPLICATE_NODE",
+                    f'duplicate diag:node id "{node_spec.node_id}" in graph',
+                )
+            if node_spec.node_id in state.non_graph_ids:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_ID_COLLISION",
+                    f'diag:node id "{node_spec.node_id}" collides with an existing non-graph element id',
+                )
+            if node_spec.node_id in state.seen_graph_node_ids:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_ID_COLLISION",
+                    f'diag:node id "{node_spec.node_id}" collides with an id from another graph',
+                )
+            nodes.append(node_spec)
+            node_by_id[node_spec.node_id] = node_spec
+            continue
+        if local == "edge":
+            edges.append(_collect_graph_edge(child))
+            continue
+        if local == "graph":
+            raise DiagramagicSemanticError(
+                "E_GRAPH_NESTED_UNSUPPORTED",
+                "diag:graph cannot be nested inside another diag:graph in v1",
+            )
+        raise DiagramagicSemanticError(
+            "E_GRAPH_CHILD_UNSUPPORTED",
+            f"unsupported child <diag:{local}> under <diag:graph>; only diag:node and diag:edge are allowed",
+        )
+
+    if len(nodes) > GRAPH_MAX_NODES or len(edges) > GRAPH_MAX_EDGES:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_TOO_LARGE",
+            (
+                f"diag:graph exceeds configured limits: nodes={len(nodes)} "
+                f"(max {GRAPH_MAX_NODES}), edges={len(edges)} (max {GRAPH_MAX_EDGES})"
+            ),
+        )
+
+    for edge in edges:
+        if edge.from_id == edge.to_id:
+            raise DiagramagicSemanticError(
+                "E_GRAPH_SELF_EDGE",
+                f'diag:edge from="{edge.from_id}" to="{edge.to_id}" self-edges are not supported in v1',
+            )
+        if edge.from_id not in node_by_id:
+            raise DiagramagicSemanticError(
+                "E_GRAPH_UNKNOWN_NODE",
+                f'diag:edge from="{edge.from_id}" references unknown node id in this graph (attribute: from)',
+            )
+        if edge.to_id not in node_by_id:
+            raise DiagramagicSemanticError(
+                "E_GRAPH_UNKNOWN_NODE",
+                f'diag:edge to="{edge.to_id}" references unknown node id in this graph (attribute: to)',
+            )
+
+    for node_spec in nodes:
+        state.seen_graph_node_ids.add(node_spec.node_id)
+
+    layout_positions = _layout_graph(nodes, edges, direction, node_gap, rank_gap)
+
+    group_attrs = {"transform": f"translate({_fmt(x)}, {_fmt(y)})"}
+    graph_id = graph_node.get("id")
+    if graph_id:
+        if graph_id in state.taken_ids and graph_id not in state.non_graph_ids:
+            # id may already be this graph element's own id from source tree
+            pass
+        group_attrs["id"] = graph_id
+    rendered_graph = ET.Element(_q("g"), group_attrs)
+
+    node_bboxes: Dict[str, Tuple[float, float, float, float]] = {}
+    for node_spec in nodes:
+        nx, ny = layout_positions[node_spec.node_id]
+        node_bboxes[node_spec.node_id] = (
+            nx,
+            ny,
+            nx + node_spec.width,
+            ny + node_spec.height,
+        )
+
+    needs_default_marker = any(
+        "marker-end" not in edge.passthrough_attrs and "marker-start" not in edge.passthrough_attrs
+        for edge in edges
+    )
+    default_marker_id: Optional[str] = None
+    if needs_default_marker:
+        default_marker_id = _reserve_unique_id(
+            state.taken_ids, f"diag-graph-arrow-default-{graph_index}"
+        )
+        defs = ET.SubElement(rendered_graph, _q("defs"))
+        marker = ET.SubElement(
+            defs,
+            _q("marker"),
+            {
+                "id": default_marker_id,
+                "viewBox": "0 0 10 10",
+                "refX": "9",
+                "refY": "5",
+                "markerWidth": "6",
+                "markerHeight": "6",
+                "orient": "auto",
+            },
+        )
+        ET.SubElement(marker, _q("path"), {"d": "M 0 0 L 10 5 L 0 10 z", "fill": "#555"})
+
+    for edge in edges:
+        from_bbox = node_bboxes[edge.from_id]
+        to_bbox = node_bboxes[edge.to_id]
+        p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+        line_attrs = {
+            "x1": _fmt(p_from[0]),
+            "y1": _fmt(p_from[1]),
+            "x2": _fmt(p_to[0]),
+            "y2": _fmt(p_to[1]),
+        }
+        line_attrs.update(edge.passthrough_attrs)
+        line_attrs.setdefault("stroke", "#555")
+        line_attrs.setdefault("stroke-width", "1")
+        if (
+            default_marker_id is not None
+            and "marker-end" not in line_attrs
+            and "marker-start" not in line_attrs
+        ):
+            line_attrs["marker-end"] = f"url(#{default_marker_id})"
+        rendered_graph.append(ET.Element(_q("line"), line_attrs))
+
+    for node_spec in nodes:
+        nx, ny = layout_positions[node_spec.node_id]
+        wrapper = ET.Element(
+            _q("g"),
+            {"id": node_spec.node_id, "transform": f"translate({_fmt(nx)}, {_fmt(ny)})"},
+        )
+        wrapper.append(node_spec.rendered)
+        rendered_graph.append(wrapper)
+
+    for edge in edges:
+        if not edge.label:
+            continue
+        from_bbox = node_bboxes[edge.from_id]
+        to_bbox = node_bboxes[edge.to_id]
+        p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+        _emit_graph_edge_label(rendered_graph, edge, p_from, p_to)
+
+    return rendered_graph
 
 
 def _expand_includes_in_tree(
@@ -451,6 +725,361 @@ def _expand_single_include(
     for child in list(compiled_root):
         wrapper.append(deepcopy(child))
     return wrapper
+
+
+def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
+    node_id = (node.get("id") or "").strip()
+    if not node_id:
+        raise DiagramagicSemanticError("E_GRAPH_NODE_MISSING_ID", "diag:node requires non-empty id")
+
+    width_attr = node.get("width")
+    width_explicit = width_attr is not None
+    width = _parse_graph_number(node, "width", None, error_code="E_GRAPH_ARGS")
+    min_width = _parse_graph_nonnegative_length(
+        node, "min-width", 0.0, error_code="E_GRAPH_ARGS"
+    )
+    padding = _parse_graph_nonnegative_length(node, "padding", 8.0, error_code="E_GRAPH_ARGS")
+    for descendant in node.iter():
+        if descendant is node:
+            continue
+        if descendant.tag is ET.Comment:
+            continue
+        if _namespace_of(descendant.tag) == diag_ns and _local_name(descendant.tag) == "graph":
+            raise DiagramagicSemanticError(
+                "E_GRAPH_NESTED_UNSUPPORTED",
+                "diag:graph cannot be nested inside another diag:graph in v1",
+            )
+
+    flex_node = ET.Element(_qual(diag_ns, "flex"))
+    flex_node.set("direction", "column")
+    flex_node.set("padding", _fmt(padding))
+    if width_explicit and width is not None:
+        flex_node.set("width", _fmt(max(width, min_width)))
+    elif min_width > 0:
+        flex_node.set("width", _fmt(min_width))
+
+    bg_class = node.get("background-class")
+    if bg_class:
+        flex_node.set("background-class", bg_class)
+    bg_style = node.get("background-style")
+    if bg_style:
+        flex_node.set("background-style", bg_style)
+
+    for child in list(node):
+        flex_node.append(deepcopy(child))
+
+    rendered, measured_width, measured_height, _ = _render_flex(
+        flex_node,
+        diag_ns,
+        inherited_family=None,
+        inherited_path=None,
+        wrap_width_hint=None,
+    )
+
+    final_width = measured_width
+    if width_explicit and width is not None:
+        final_width = max(width, min_width)
+    else:
+        final_width = max(measured_width, min_width)
+
+    control_attrs = {
+        "id",
+        "width",
+        "min-width",
+        "padding",
+        "background-class",
+        "background-style",
+    }
+    for key, value in node.attrib.items():
+        if _namespace_of(key) is not None:
+            continue
+        if key in control_attrs:
+            continue
+        rendered.set(key, value)
+
+    if not math.isclose(final_width, measured_width, abs_tol=1e-9):
+        for child in list(rendered):
+            if _local_name(child.tag) != "rect":
+                continue
+            if child.get("class") == bg_class or (bg_class is None and bg_style and child.get("style") == bg_style):
+                child.set("width", _fmt(final_width))
+                break
+
+    return _GraphNodeSpec(
+        node_id=node_id,
+        source_node=node,
+        rendered=rendered,
+        width=final_width,
+        height=measured_height,
+    )
+
+
+def _collect_graph_edge(node: ET.Element) -> _GraphEdgeSpec:
+    from_id = (node.get("from") or "").strip()
+    to_id = (node.get("to") or "").strip()
+    if not from_id or not to_id:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            "diag:edge requires non-empty from and to attributes",
+        )
+    label = node.get("label")
+    label_size = _parse_graph_number(node, "label-size", 10.0, error_code="E_GRAPH_ARGS")
+    if label_size is None or label_size <= 0:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            f'diag:edge label-size must be > 0 (got {node.get("label-size")!r})',
+        )
+    label_fill = node.get("label-fill") or "#555"
+
+    passthrough: Dict[str, str] = {}
+    control_attrs = {"from", "to", "label", "label-size", "label-fill"}
+    for key, value in node.attrib.items():
+        if _namespace_of(key) is not None:
+            continue
+        if key in control_attrs:
+            continue
+        passthrough[key] = value
+
+    return _GraphEdgeSpec(
+        from_id=from_id,
+        to_id=to_id,
+        label=label,
+        label_size=float(label_size),
+        label_fill=label_fill,
+        passthrough_attrs=passthrough,
+    )
+
+
+def _layout_graph(
+    nodes: List[_GraphNodeSpec],
+    edges: List[_GraphEdgeSpec],
+    direction: str,
+    node_gap: float,
+    rank_gap: float,
+) -> Dict[str, Tuple[float, float]]:
+    node_order = [node.node_id for node in nodes]
+    order_index = {node_id: idx for idx, node_id in enumerate(node_order)}
+    size_by_id = {node.node_id: (node.width, node.height) for node in nodes}
+
+    outgoing: Dict[str, List[int]] = {node_id: [] for node_id in node_order}
+    for idx, edge in enumerate(edges):
+        outgoing[edge.from_id].append(idx)
+
+    reversed_edges: Set[int] = set()
+    state: Dict[str, int] = {node_id: 0 for node_id in node_order}
+
+    def _dfs(node_id: str) -> None:
+        state[node_id] = 1
+        for edge_idx in outgoing[node_id]:
+            target = edges[edge_idx].to_id
+            if state[target] == 0:
+                _dfs(target)
+            elif state[target] == 1:
+                reversed_edges.add(edge_idx)
+        state[node_id] = 2
+
+    for node_id in node_order:
+        if state[node_id] == 0:
+            _dfs(node_id)
+
+    dag_edges: List[Tuple[str, str]] = []
+    dag_outgoing: Dict[str, List[str]] = {node_id: [] for node_id in node_order}
+    indegree: Dict[str, int] = {node_id: 0 for node_id in node_order}
+    for idx, edge in enumerate(edges):
+        if idx in reversed_edges:
+            u, v = edge.to_id, edge.from_id
+        else:
+            u, v = edge.from_id, edge.to_id
+        dag_edges.append((u, v))
+        dag_outgoing[u].append(v)
+        indegree[v] += 1
+
+    queue: List[str] = [node_id for node_id in node_order if indegree[node_id] == 0]
+    topo: List[str] = []
+    cursor = 0
+    while cursor < len(queue):
+        u = queue[cursor]
+        cursor += 1
+        topo.append(u)
+        for v in dag_outgoing[u]:
+            indegree[v] -= 1
+            if indegree[v] == 0:
+                queue.append(v)
+    if len(topo) != len(node_order):
+        topo = node_order[:]
+
+    rank: Dict[str, int] = {node_id: 0 for node_id in node_order}
+    for u in topo:
+        base = rank[u]
+        for v in dag_outgoing[u]:
+            if rank[v] < base + 1:
+                rank[v] = base + 1
+
+    rank_to_nodes: Dict[int, List[str]] = {}
+    for node_id in node_order:
+        rank_to_nodes.setdefault(rank[node_id], []).append(node_id)
+
+    max_rank = max(rank_to_nodes.keys(), default=0)
+    for r in range(1, max_rank + 1):
+        current_nodes = rank_to_nodes.get(r, [])
+        if not current_nodes:
+            continue
+        prev_order_pos: Dict[str, int] = {}
+        for pr in range(0, r):
+            for idx, node_id in enumerate(rank_to_nodes.get(pr, [])):
+                if node_id not in prev_order_pos:
+                    prev_order_pos[node_id] = idx
+        incoming_positions: Dict[str, float] = {}
+        for node_id in current_nodes:
+            preds = [u for (u, v) in dag_edges if v == node_id and rank[u] < r]
+            if not preds:
+                incoming_positions[node_id] = float("inf")
+                continue
+            pred_positions = sorted(prev_order_pos.get(p, order_index[p]) for p in preds)
+            mid = len(pred_positions) // 2
+            if len(pred_positions) % 2 == 1:
+                median = float(pred_positions[mid])
+            else:
+                median = 0.5 * (pred_positions[mid - 1] + pred_positions[mid])
+            incoming_positions[node_id] = median
+        rank_to_nodes[r] = sorted(
+            current_nodes,
+            key=lambda node_id: (incoming_positions[node_id], order_index[node_id]),
+        )
+
+    cross_span_by_rank: Dict[int, float] = {}
+    main_size_by_rank: Dict[int, float] = {}
+    for r in range(0, max_rank + 1):
+        members = rank_to_nodes.get(r, [])
+        if direction in {"TB", "BT"}:
+            cross_sizes = [size_by_id[n][0] for n in members]
+            main_sizes = [size_by_id[n][1] for n in members]
+        else:
+            cross_sizes = [size_by_id[n][1] for n in members]
+            main_sizes = [size_by_id[n][0] for n in members]
+        span = sum(cross_sizes)
+        if members:
+            span += node_gap * (len(members) - 1)
+        cross_span_by_rank[r] = span
+        main_size_by_rank[r] = max(main_sizes, default=0.0)
+
+    max_cross_span = max(cross_span_by_rank.values(), default=0.0)
+    rank_main_origin: Dict[int, float] = {}
+    cursor_main = 0.0
+    for r in range(0, max_rank + 1):
+        rank_main_origin[r] = cursor_main
+        cursor_main += main_size_by_rank.get(r, 0.0) + rank_gap
+
+    positions: Dict[str, Tuple[float, float]] = {}
+    for r in range(0, max_rank + 1):
+        members = rank_to_nodes.get(r, [])
+        span = cross_span_by_rank.get(r, 0.0)
+        cross_cursor = (max_cross_span - span) / 2.0
+        for node_id in members:
+            width, height = size_by_id[node_id]
+            if direction in {"TB", "BT"}:
+                x = cross_cursor
+                y_base = rank_main_origin[r]
+                y = y_base if direction == "TB" else -(y_base + height)
+                positions[node_id] = (x, y)
+                cross_cursor += width + node_gap
+            else:
+                y = cross_cursor
+                x_base = rank_main_origin[r]
+                x = x_base if direction == "LR" else -(x_base + width)
+                positions[node_id] = (x, y)
+                cross_cursor += height + node_gap
+
+    return positions
+
+
+def _emit_graph_edge_label(
+    graph_group: ET.Element,
+    edge: _GraphEdgeSpec,
+    p_from: Tuple[float, float],
+    p_to: Tuple[float, float],
+) -> None:
+    mid_x = (p_from[0] + p_to[0]) / 2.0
+    mid_y = (p_from[1] + p_to[1]) / 2.0
+    dx = p_to[0] - p_from[0]
+    dy = p_to[1] - p_from[1]
+    seg_len = math.hypot(dx, dy)
+    if seg_len <= 1e-9:
+        lx, ly = mid_x, mid_y
+    else:
+        nx = -dy / seg_len
+        ny = dx / seg_len
+        lx = mid_x + nx * 6.0
+        ly = mid_y + ny * 6.0
+
+    attrs = {
+        "x": _fmt(lx),
+        "y": _fmt(ly),
+        "text-anchor": "middle",
+        "font-size": _fmt(edge.label_size),
+        "fill": edge.label_fill,
+        "dominant-baseline": "alphabetic",
+    }
+    label = ET.Element(_q("text"), attrs)
+    label.text = edge.label
+    graph_group.append(label)
+
+
+def _parse_graph_nonnegative_length(
+    node: ET.Element,
+    attr: str,
+    default: float,
+    *,
+    error_code: str,
+) -> float:
+    value = _parse_graph_number(node, attr, default, error_code=error_code)
+    assert value is not None
+    if value < 0:
+        raise DiagramagicSemanticError(
+            error_code,
+            f'{_tag_desc(node)} attribute "{attr}" must be >= 0 (got {node.get(attr)!r})',
+        )
+    return float(value)
+
+
+def _parse_graph_number(
+    node: ET.Element,
+    attr: str,
+    default: Optional[float],
+    *,
+    error_code: str,
+) -> Optional[float]:
+    raw = node.get(attr)
+    if raw is None:
+        return default
+    parsed = _parse_length(raw, None)
+    if parsed is None:
+        raise DiagramagicSemanticError(
+            error_code,
+            f'{_tag_desc(node)} attribute "{attr}" must be numeric (got {raw!r})',
+        )
+    return float(parsed)
+
+
+def _tag_desc(node: ET.Element) -> str:
+    ns = _namespace_of(node.tag)
+    local = _local_name(node.tag)
+    if ns is None:
+        return f"<{local}>"
+    return f"<diag:{local}>"
+
+
+def _reserve_unique_id(existing: Set[str], base: str) -> str:
+    if base not in existing:
+        existing.add(base)
+        return base
+    idx = 1
+    while True:
+        candidate = f"{base}-{idx}"
+        if candidate not in existing:
+            existing.add(candidate)
+            return candidate
+        idx += 1
 
 
 def _ensure_unique_ids(root: ET.Element) -> None:

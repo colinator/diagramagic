@@ -1,0 +1,16 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph direction="TB" node-gap="16" rank-gap="34">
+    <diag:node id="d1" padding="8" background-style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4"><text style="font-size:11px">d1</text></diag:node>
+    <diag:node id="d2" padding="8" background-style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4"><text style="font-size:11px">d2</text></diag:node>
+    <diag:node id="d3" padding="8" background-style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4"><text style="font-size:11px">d3</text></diag:node>
+    <diag:node id="d4" padding="8" background-style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4"><text style="font-size:11px">d4</text></diag:node>
+    <diag:node id="d5" padding="8" background-style="fill:#f6f8fa;stroke:#57606a;stroke-width:1;rx:4"><text style="font-size:11px">d5</text></diag:node>
+    <diag:edge from="d1" to="d2"/>
+    <diag:edge from="d1" to="d3"/>
+    <diag:edge from="d2" to="d4"/>
+    <diag:edge from="d3" to="d4"/>
+    <diag:edge from="d2" to="d5"/>
+    <diag:edge from="d3" to="d5"/>
+    <diag:edge from="d4" to="d5"/>
+  </diag:graph>
+</diag:diagram>

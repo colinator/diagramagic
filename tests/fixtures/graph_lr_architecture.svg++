@@ -1,0 +1,16 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .svc { fill:#ffeaa7; stroke:#fdcb6e; stroke-width:1; rx:6; }
+    .db { fill:#dfe6e9; stroke:#636e72; stroke-width:1; rx:6; }
+  </style>
+  <diag:graph direction="LR" node-gap="22" rank-gap="52">
+    <diag:node id="lr_client" padding="10" background-class="svc"><text style="font-size:12px">Client</text></diag:node>
+    <diag:node id="lr_api" padding="10" background-class="svc"><text style="font-size:12px">API</text></diag:node>
+    <diag:node id="lr_auth" padding="10" background-class="svc"><text style="font-size:12px">Auth</text></diag:node>
+    <diag:node id="lr_db" padding="10" background-class="db"><text style="font-size:12px">DB</text></diag:node>
+    <diag:edge from="lr_client" to="lr_api" label="HTTPS"/>
+    <diag:edge from="lr_api" to="lr_auth" label="verify"/>
+    <diag:edge from="lr_api" to="lr_db" label="query"/>
+    <diag:edge from="lr_auth" to="lr_db" stroke-dasharray="4 2"/>
+  </diag:graph>
+</diag:diagram>
