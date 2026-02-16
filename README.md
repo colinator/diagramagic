@@ -1,6 +1,16 @@
 # diagramagic
 
-svg++ reference renderer for humans and LLMs. Feed it svg++ input and it emits plain SVG—no runtime, no exotic format. What is "svg++"? Just something we made up here: it's simply svg plus a few additions to support text layout and templates.
+svg++ reference renderer for humans and LLMs.
+
+Feed it svg++ input and it emits plain SVG: no runtime, no proprietary viewer.
+
+What is svg++? It is standard SVG plus a small set of `diag:` layout/composition tags:
+- flex layout (`diag:flex`)
+- automatic graph layout (`diag:graph`, `diag:node`, `diag:edge`)
+- reusable components (`diag:template`, `diag:instance`)
+- compile-time composition (`diag:include`)
+- connection helpers (`diag:arrow`, `diag:anchor`)
+- wrapped text on native `<text>` (`diag:wrap="true"`)
 
 ## Installation
 
@@ -29,17 +39,45 @@ Installation typically takes 30-60 seconds while the Rust extension compiles.
 - **Full spec**: `PROJECTSPEC.md`
 - **Tests**: `python tests/run_tests.py`
 
-svg++ basics: wrap your document in `<diag:diagram>` with the `diag:` namespace, use `<diag:flex>` for layout, and `diag:wrap="true"` on `<text>` to wrap. Everything compiles to pure SVG 1.1.
+svg++ basics: wrap your document in `<diag:diagram>` with the `diag:` namespace, use `<diag:flex>` for layout, and use `diag:wrap="true"` on `<text>` for multi-line text. Everything compiles to pure SVG 1.1.
 
 Need reusable pieces? Define `<diag:template name="card">…</diag:template>` once, then drop `<diag:instance template="card">` wherever you need consistent cards or packets.
 
 Output defaults to a white canvas; set `diag:background="none"` (or any color) on `<diag:diagram>` to change it.
 
+## Workflow Loop
+
+Typical authoring loop:
+
+1. Write or edit `.svg++`
+2. Compile to `.svg` with `diagramagic compile ...`
+3. Render to `.png` with `diagramagic render ...`
+4. Inspect output (human or agent)
+5. Adjust source and repeat
+
+## svg++ Tags
+
+New `diag:` elements currently supported:
+
+- `<diag:diagram>` (root)
+- `<diag:flex>` (row/column layout)
+- `<diag:graph>` (auto node/edge layout)
+- `<diag:node>` (graph node)
+- `<diag:edge>` (graph edge)
+- `<diag:arrow>` (general connector by id)
+- `<diag:anchor>` (named connection point)
+- `<diag:template>`, `<diag:instance>`, `<diag:slot>`, `<diag:param>` (templating)
+- `<diag:include>` (compile-time sub-diagram include)
+
+Text wrapping stays on standard SVG `<text>`:
+- use `diag:wrap="true"` (and optional `diag:max-width`) on `<text>` for multi-line layout
+- `diag:node` is a graph container, not a text primitive
+
 Example:
 
 ```xml
 <diag:diagram xmlns="http://www.w3.org/2000/svg"
-              xmlns:diag="https://example.com/diag"
+              xmlns:diag="https://diagramagic.ai/ns"
               width="300" height="160">
   <style>
     .card { fill:#fff; stroke:#999; rx:10; ry:10; }
