@@ -12,6 +12,18 @@ What is svg++? It is standard SVG plus a small set of `diag:` layout/composition
 - connection helpers (`diag:arrow`, `diag:anchor`)
 - wrapped text on native `<text>` (`diag:wrap="true"`)
 
+## Why svg++
+
+LLMs already have strong SVG muscle memory: tags, attributes, groups, styles, and transforms.
+
+svg++ keeps that familiar base and adds only a few high-leverage primitives for the parts models usually get wrong in raw SVG:
+- layout without manual coordinate math
+- wrapped text that measures correctly
+- graph placement/routing from node+edge intent
+- reusable templates and compile-time includes
+
+This keeps prompting simple, keeps edits local, and still compiles down to plain SVG for portability.
+
 ## Installation
 
 ```bash
