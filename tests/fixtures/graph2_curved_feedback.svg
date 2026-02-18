@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.6 343 615.219" width="343" height="615.219">
+  <rect x="-20.5" y="-20.6" width="343" height="615.219" fill="#fff" />
+  <style>
+    .entry { fill:#f9f6e7; stroke:#555; stroke-width:1.2; rx:16; }
+    .a { fill:#e9f0ff; stroke:#5b6ac9; stroke-width:1; rx:10; }
+    .b { fill:#eef8ec; stroke:#4d9c5c; stroke-width:1; rx:10; }
+    .t { font-size:13px; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 72.82 34 C 62.181 43.949 57.853 53.28 47.7 90" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 101.005 34 C 120.298 66.778 125.894 81.446 157.542 180.01" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 42.679 124 C 42.482 134.438 42.499 143.52 42.841 180.01" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 36.261 214.01 C 11.304 276.97 9.441 290.15 36.432 360.01" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 55.384 360.01 C 167.616 205.949 185.587 212.928 69.957 450.019" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 57.546 450.019 C 48.878 414.259 50.815 426.019 154.239 540.019" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 153.745 214.01 C 119.616 276.701 122.304 291.562 154.903 360.01" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 153.511 394.01 C 89.843 508.08 99.984 521.851 181.178 484.019" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 215.608 450.019 C 194.698 276.97 196.56 290.15 216 289.173" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 242.747 304.01 C 134.227 417.514 123.994 431.136 163.495 540.019" />
+    <path stroke-dasharray="4 2" stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 53.152 214.01 C 174.25 416.794 178.33 428.938 249.337 304.01" />
+    <path stroke-dasharray="4 2" stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 206 373.337 C 273.254 367.594 271.987 380.448 102.967 450.019" />
+    <path stroke="#777" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 77.735 450.019 C 207.715 312.509 198.614 323.635 55.212 124" />
+    <path stroke="#777" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 257.125 304.01 C 240.989 450.336 237.178 472.339 176.228 394.01" />
+    <g id="start" transform="translate(30.998, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="120" height="34" class="entry" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">start</text>
+        </g>
+      </g>
+    </g>
+    <g id="a0" transform="translate(0, 90)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="a" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">a0</text>
+        </g>
+      </g>
+    </g>
+    <g id="a1" transform="translate(0, 180.01)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="a" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">a1</text>
+        </g>
+      </g>
+    </g>
+    <g id="a2" transform="translate(0, 360.01)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="a" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">a2</text>
+        </g>
+      </g>
+    </g>
+    <g id="a3" transform="translate(18.666, 450.019)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="a" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">a3</text>
+        </g>
+      </g>
+    </g>
+    <g id="b0" transform="translate(120, 180.01)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="b" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">b0</text>
+        </g>
+      </g>
+    </g>
+    <g id="b1" transform="translate(120, 360.01)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="b" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">b1</text>
+        </g>
+      </g>
+    </g>
+    <g id="b2" transform="translate(174.662, 450.019)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="b" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">b2</text>
+        </g>
+      </g>
+    </g>
+    <g id="b3" transform="translate(216, 270.01)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="86" height="34" class="b" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">b3</text>
+        </g>
+      </g>
+    </g>
+    <g id="end" transform="translate(114.662, 540.019)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="110" height="34" class="entry" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="11">end</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

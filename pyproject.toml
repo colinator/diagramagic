@@ -1,12 +1,14 @@
 [project]
 name = "diagramagic"
-version = "0.1.16"
+version = "0.1.17"
 description = "svg++ reference renderer"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "Pillow>=10.0.0",
 ]
+# NOTE: Advanced graph layouts use system Graphviz (`dot` executable).
+# This is an external/system dependency and cannot be installed by pip/pyproject alone.
 
 [project.optional-dependencies]
 dev = [

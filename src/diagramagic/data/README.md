@@ -44,6 +44,16 @@ pip install diagramagic
 
 Installation typically takes 30-60 seconds while the Rust extension compiles.
 
+Advanced graph layouts (`<diag:graph layout="circular|radial">`) also require a system Graphviz install (`dot` on PATH):
+
+```bash
+brew install graphviz
+which dot
+dot -V
+```
+
+Note: this cannot be installed automatically via `pyproject.toml`/`pip` because `dot` is a system executable dependency.
+
 ## Quick Start
 
 - **Compile**: `diagramagic compile input.svg++`

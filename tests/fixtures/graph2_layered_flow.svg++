@@ -1,0 +1,17 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20">
+  <style>
+    .box { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <diag:graph layout="layered" routing="auto" quality="balanced" direction="TB" node-gap="28" rank-gap="40">
+    <diag:node id="start" padding="10" gap="6" background-class="box"><text class="t">Start</text></diag:node>
+    <diag:node id="validate" padding="10" gap="6" background-class="box"><text class="t">Validate</text></diag:node>
+    <diag:node id="process" padding="10" gap="6" background-class="box"><text class="t">Process</text></diag:node>
+    <diag:node id="done" padding="10" gap="6" background-class="box"><text class="t">Done</text></diag:node>
+    <diag:edge from="start" to="validate"/>
+    <diag:edge from="validate" to="process"/>
+    <diag:edge from="process" to="done"/>
+  </diag:graph>
+</diag:diagram>

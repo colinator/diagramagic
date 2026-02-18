@@ -1,0 +1,20 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20">
+  <style>
+    .hub { fill:#e8f8ef; stroke:#27ae60; stroke-width:1.2; rx:8; }
+    .leaf { fill:#f5f8ff; stroke:#4a6fa5; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <diag:graph layout="radial" routing="polyline" quality="balanced" node-gap="20" rank-gap="54">
+    <diag:node id="core" padding="10" gap="6" background-class="hub"><text class="t">Core</text></diag:node>
+    <diag:node id="ingress" padding="10" gap="6" background-class="leaf"><text class="t">Ingress</text></diag:node>
+    <diag:node id="search" padding="10" gap="6" background-class="leaf"><text class="t">Search</text></diag:node>
+    <diag:node id="worker" padding="10" gap="6" background-class="leaf"><text class="t">Worker</text></diag:node>
+    <diag:node id="storage" padding="10" gap="6" background-class="leaf"><text class="t">Storage</text></diag:node>
+    <diag:edge from="core" to="ingress"/>
+    <diag:edge from="core" to="search"/>
+    <diag:edge from="core" to="worker"/>
+    <diag:edge from="core" to="storage"/>
+  </diag:graph>
+</diag:diagram>

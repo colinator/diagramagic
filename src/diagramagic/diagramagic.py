@@ -4,6 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 import re
+import shlex
+import shutil
+import subprocess
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 from pathlib import Path
@@ -101,6 +104,18 @@ class _GraphEdgeSpec:
     label_size: float
     label_fill: str
     passthrough_attrs: Dict[str, str]
+
+
+@dataclass
+class _GraphvizEdgeLayout:
+    points: List[Tuple[float, float]]
+    label_pos: Optional[Tuple[float, float]]
+
+
+@dataclass
+class _GraphvizLayoutResult:
+    node_positions: Dict[str, Tuple[float, float]]
+    edge_layouts: List[_GraphvizEdgeLayout]
 
 
 @dataclass
@@ -455,6 +470,27 @@ def _expand_single_graph(
     )
     x = _parse_graph_number(graph_node, "x", 0.0, error_code="E_GRAPH_ARGS")
     y = _parse_graph_number(graph_node, "y", 0.0, error_code="E_GRAPH_ARGS")
+    layout = (graph_node.get("layout") or "layered").strip().lower()
+    routing = (graph_node.get("routing") or "auto").strip().lower()
+    quality = (graph_node.get("quality") or "balanced").strip().lower()
+    if layout not in {"layered", "circular", "radial"}:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            (
+                f'diag:graph has invalid layout="{graph_node.get("layout")}" '
+                '(supported in v2 phase 1: layered, circular, radial)'
+            ),
+        )
+    if routing not in {"auto", "spline", "polyline", "ortho", "curved", "line"}:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            f'diag:graph has invalid routing="{graph_node.get("routing")}"',
+        )
+    if quality not in {"fast", "balanced", "high"}:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_ARGS",
+            f'diag:graph has invalid quality="{graph_node.get("quality")}"',
+        )
 
     nodes: List[_GraphNodeSpec] = []
     node_by_id: Dict[str, _GraphNodeSpec] = {}
@@ -532,7 +568,25 @@ def _expand_single_graph(
     for node_spec in nodes:
         state.seen_graph_node_ids.add(node_spec.node_id)
 
-    layout_positions = _layout_graph(nodes, edges, direction, node_gap, rank_gap)
+    graphviz_layout = _layout_graph_with_graphviz(
+        nodes,
+        edges,
+        direction=direction,
+        layout=layout,
+        routing=routing,
+        quality=quality,
+        node_gap=node_gap,
+        rank_gap=rank_gap,
+    )
+    if graphviz_layout is None:
+        if layout != "layered":
+            raise DiagramagicSemanticError(
+                "E_GRAPHVIZ_UNAVAILABLE",
+                f'diag:graph layout="{layout}" requires Graphviz ("dot" executable not found)',
+            )
+        layout_positions = _layout_graph(nodes, edges, direction, node_gap, rank_gap)
+    else:
+        layout_positions = graphviz_layout.node_positions
 
     group_attrs = {"transform": f"translate({_fmt(x)}, {_fmt(y)})"}
     graph_id = graph_node.get("id")
@@ -578,26 +632,35 @@ def _expand_single_graph(
         )
         ET.SubElement(marker, _q("path"), {"d": "M 0 0 L 10 5 L 0 10 z", "fill": "#555"})
 
-    for edge in edges:
+    for idx, edge in enumerate(edges):
         from_bbox = node_bboxes[edge.from_id]
         to_bbox = node_bboxes[edge.to_id]
         p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
-        line_attrs = {
-            "x1": _fmt(p_from[0]),
-            "y1": _fmt(p_from[1]),
-            "x2": _fmt(p_to[0]),
-            "y2": _fmt(p_to[1]),
-        }
-        line_attrs.update(edge.passthrough_attrs)
-        line_attrs.setdefault("stroke", "#555")
-        line_attrs.setdefault("stroke-width", "1")
+        edge_points: Optional[List[Tuple[float, float]]] = None
+        if graphviz_layout is not None and idx < len(graphviz_layout.edge_layouts):
+            candidate = graphviz_layout.edge_layouts[idx].points
+            if len(candidate) >= 2:
+                edge_points = candidate
+        if edge_points is None:
+            edge_points = [p_from, p_to]
+
+        attrs: Dict[str, str] = {}
+        attrs.update(edge.passthrough_attrs)
+        attrs.setdefault("stroke", "#555")
+        attrs.setdefault("stroke-width", "1")
+        attrs.setdefault("fill", "none")
         if (
             default_marker_id is not None
-            and "marker-end" not in line_attrs
-            and "marker-start" not in line_attrs
+            and "marker-end" not in attrs
+            and "marker-start" not in attrs
         ):
-            line_attrs["marker-end"] = f"url(#{default_marker_id})"
-        rendered_graph.append(ET.Element(_q("line"), line_attrs))
+            attrs["marker-end"] = f"url(#{default_marker_id})"
+        edge_points = _clip_graph_edge_points_to_nodes(edge_points, from_bbox, to_bbox)
+        use_bezier = routing in {"curved", "spline"} or (
+            routing == "auto" and layout == "layered"
+        )
+        attrs["d"] = _graph_points_to_path_d(edge_points, bezier=use_bezier)
+        rendered_graph.append(ET.Element(_q("path"), attrs))
 
     for node_spec in nodes:
         nx, ny = layout_positions[node_spec.node_id]
@@ -608,13 +671,19 @@ def _expand_single_graph(
         wrapper.append(node_spec.rendered)
         rendered_graph.append(wrapper)
 
-    for edge in edges:
+    for idx, edge in enumerate(edges):
         if not edge.label:
             continue
-        from_bbox = node_bboxes[edge.from_id]
-        to_bbox = node_bboxes[edge.to_id]
-        p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
-        _emit_graph_edge_label(rendered_graph, edge, p_from, p_to)
+        label_pos: Optional[Tuple[float, float]] = None
+        if graphviz_layout is not None and idx < len(graphviz_layout.edge_layouts):
+            label_pos = graphviz_layout.edge_layouts[idx].label_pos
+        if label_pos is not None:
+            _emit_graph_edge_label_at(rendered_graph, edge, label_pos)
+        else:
+            from_bbox = node_bboxes[edge.from_id]
+            to_bbox = node_bboxes[edge.to_id]
+            p_from, p_to = _resolve_arrow_points(from_bbox, to_bbox)
+            _emit_graph_edge_label(rendered_graph, edge, p_from, p_to)
 
     return rendered_graph
 
@@ -1044,6 +1113,352 @@ def _emit_graph_edge_label(
     label = ET.Element(_q("text"), attrs)
     label.text = edge.label
     graph_group.append(label)
+
+
+def _emit_graph_edge_label_at(
+    graph_group: ET.Element,
+    edge: _GraphEdgeSpec,
+    point: Tuple[float, float],
+) -> None:
+    attrs = {
+        "x": _fmt(point[0]),
+        "y": _fmt(point[1]),
+        "text-anchor": "middle",
+        "font-size": _fmt(edge.label_size),
+        "fill": edge.label_fill,
+        "dominant-baseline": "alphabetic",
+    }
+    label = ET.Element(_q("text"), attrs)
+    label.text = edge.label
+    graph_group.append(label)
+
+
+def _graph_points_to_path_d(points: List[Tuple[float, float]], *, bezier: bool = False) -> str:
+    if not points:
+        return ""
+    if bezier and len(points) >= 4:
+        parts = [f"M {_fmt(points[0][0])} {_fmt(points[0][1])}"]
+        i = 1
+        while i + 2 < len(points):
+            c1 = points[i]
+            c2 = points[i + 1]
+            end = points[i + 2]
+            parts.append(
+                "C "
+                f"{_fmt(c1[0])} {_fmt(c1[1])} "
+                f"{_fmt(c2[0])} {_fmt(c2[1])} "
+                f"{_fmt(end[0])} {_fmt(end[1])}"
+            )
+            i += 3
+        for x, y in points[i:]:
+            parts.append(f"L {_fmt(x)} {_fmt(y)}")
+        return " ".join(parts)
+    parts = [f"M {_fmt(points[0][0])} {_fmt(points[0][1])}"]
+    for x, y in points[1:]:
+        parts.append(f"L {_fmt(x)} {_fmt(y)}")
+    return " ".join(parts)
+
+
+def _clip_graph_edge_points_to_nodes(
+    points: List[Tuple[float, float]],
+    from_bbox: Tuple[float, float, float, float],
+    to_bbox: Tuple[float, float, float, float],
+) -> List[Tuple[float, float]]:
+    if len(points) < 2:
+        return points
+
+    adjusted = [*points]
+    start_target = adjusted[1]
+    end_source = adjusted[-2]
+    start_center = _bbox_center(from_bbox)
+    end_center = _bbox_center(to_bbox)
+    start_clip = _ray_rect_intersection(start_center, start_target, from_bbox)
+    end_clip = _ray_rect_intersection(end_center, end_source, to_bbox)
+    if start_clip is not None:
+        adjusted[0] = start_clip
+    if end_clip is not None:
+        adjusted[-1] = end_clip
+
+    return adjusted
+
+
+def _layout_graph_with_graphviz(
+    nodes: List[_GraphNodeSpec],
+    edges: List[_GraphEdgeSpec],
+    *,
+    direction: str,
+    layout: str,
+    routing: str,
+    quality: str,
+    node_gap: float,
+    rank_gap: float,
+) -> Optional[_GraphvizLayoutResult]:
+    dot_path = shutil.which("dot")
+    if not dot_path:
+        return None
+    engine_by_layout = {
+        "layered": "dot",
+        "circular": "circo",
+        "radial": "twopi",
+    }
+    engine = engine_by_layout[layout]
+    splines = _graphviz_splines_for_routing(layout=layout, routing=routing)
+    dot_text = _build_graphviz_dot(
+        nodes=nodes,
+        edges=edges,
+        direction=direction,
+        layout=layout,
+        splines=splines,
+        quality=quality,
+        node_gap=node_gap,
+        rank_gap=rank_gap,
+    )
+    try:
+        proc = subprocess.run(
+            [dot_path, f"-K{engine}", "-Tplain"],
+            input=dot_text,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5.0,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_FAILED",
+            f'graph layout timed out for layout="{layout}"',
+        ) from exc
+    except OSError as exc:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_FAILED",
+            f'failed to execute Graphviz for layout="{layout}": {exc}',
+        ) from exc
+    if proc.returncode != 0:
+        detail = (proc.stderr or "").strip()
+        if len(detail) > 240:
+            detail = detail[:240] + "..."
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_FAILED",
+            f'Graphviz failed for layout="{layout}": {detail or "unknown error"}',
+        )
+    return _parse_graphviz_plain_layout(proc.stdout, nodes, edges)
+
+
+def _build_graphviz_dot(
+    *,
+    nodes: List[_GraphNodeSpec],
+    edges: List[_GraphEdgeSpec],
+    direction: str,
+    layout: str,
+    splines: str,
+    quality: str,
+    node_gap: float,
+    rank_gap: float,
+) -> str:
+    nodesep_in = max(0.02, node_gap / 96.0)
+    ranksep_in = max(0.02, rank_gap / 96.0)
+    lines: List[str] = ["digraph G {"]
+    lines.append(f'  graph [splines="{splines}"];')
+    if layout == "layered":
+        lines.append(f'  graph [rankdir="{direction}", nodesep="{nodesep_in:.4f}", ranksep="{ranksep_in:.4f}"];')
+    elif layout == "radial":
+        lines.append(f'  graph [ranksep="{ranksep_in:.4f}", overlap="false"];')
+    else:
+        lines.append('  graph [overlap="false"];')
+    if quality == "fast":
+        lines.append('  graph [pack="false"];')
+    elif quality == "high":
+        lines.append('  graph [pack="true", packmode="array_u"];')
+    lines.append('  node [shape="box", fixedsize="true", margin="0"];')
+    for node in nodes:
+        width_in = max(0.01, node.width / 96.0)
+        height_in = max(0.01, node.height / 96.0)
+        node_id = _dot_quote(node.node_id)
+        lines.append(f'  {node_id} [width="{width_in:.4f}", height="{height_in:.4f}"];')
+    for edge in edges:
+        u = _dot_quote(edge.from_id)
+        v = _dot_quote(edge.to_id)
+        lines.append(f"  {u} -> {v};")
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def _dot_quote(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _graphviz_splines_for_routing(*, layout: str, routing: str) -> str:
+    if routing == "auto":
+        return "spline" if layout == "layered" else "polyline"
+    mapping = {
+        "spline": "spline",
+        "polyline": "polyline",
+        "ortho": "ortho",
+        "curved": "curved",
+        "line": "line",
+    }
+    return mapping[routing]
+
+
+def _parse_graphviz_plain_layout(
+    plain_text: str,
+    nodes: List[_GraphNodeSpec],
+    edges: List[_GraphEdgeSpec],
+) -> _GraphvizLayoutResult:
+    lines = [ln.strip() for ln in plain_text.splitlines() if ln.strip()]
+    if not lines or not lines[0].startswith("graph "):
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_PARSE",
+            "unexpected Graphviz plain output: missing graph header",
+        )
+    header = shlex.split(lines[0])
+    if len(header) < 4:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_PARSE",
+            "unexpected Graphviz plain output: malformed graph header",
+        )
+    try:
+        graph_height_in = float(header[3])
+    except ValueError as exc:
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_PARSE",
+            "unexpected Graphviz plain output: invalid graph dimensions",
+        ) from exc
+
+    node_positions_center: Dict[str, Tuple[float, float, float, float]] = {}
+    parsed_edges: List[_GraphvizEdgeLayout] = []
+    for line in lines[1:]:
+        if line == "stop":
+            break
+        parts = shlex.split(line)
+        if not parts:
+            continue
+        kind = parts[0]
+        if kind == "node":
+            if len(parts) < 6:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_LAYOUT_PARSE",
+                    "unexpected Graphviz plain output: malformed node line",
+                )
+            node_id = parts[1]
+            try:
+                x_in = float(parts[2])
+                y_in = float(parts[3])
+                w_in = float(parts[4])
+                h_in = float(parts[5])
+            except ValueError as exc:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_LAYOUT_PARSE",
+                    f'unexpected Graphviz plain output: invalid numeric node data for "{node_id}"',
+                ) from exc
+            node_positions_center[node_id] = (x_in, y_in, w_in, h_in)
+        elif kind == "edge":
+            if len(parts) < 4:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_LAYOUT_PARSE",
+                    "unexpected Graphviz plain output: malformed edge line",
+                )
+            try:
+                n = int(parts[3])
+            except ValueError as exc:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_LAYOUT_PARSE",
+                    "unexpected Graphviz plain output: invalid edge point count",
+                ) from exc
+            expected_min = 4 + 2 * n
+            if len(parts) < expected_min:
+                raise DiagramagicSemanticError(
+                    "E_GRAPH_LAYOUT_PARSE",
+                    "unexpected Graphviz plain output: truncated edge points",
+                )
+            coords = parts[4 : 4 + 2 * n]
+            points: List[Tuple[float, float]] = []
+            for i in range(0, len(coords), 2):
+                try:
+                    px_in = float(coords[i])
+                    py_in = float(coords[i + 1])
+                except ValueError as exc:
+                    raise DiagramagicSemanticError(
+                        "E_GRAPH_LAYOUT_PARSE",
+                        "unexpected Graphviz plain output: invalid edge point value",
+                    ) from exc
+                points.append(
+                    (
+                        px_in * 96.0,
+                        (graph_height_in - py_in) * 96.0,
+                    )
+                )
+            label_pos: Optional[Tuple[float, float]] = None
+            remaining = parts[expected_min:]
+            if len(remaining) >= 3:
+                # plain format includes label text + x/y when label exists.
+                try:
+                    lx_in = float(remaining[1])
+                    ly_in = float(remaining[2])
+                    label_pos = (lx_in * 96.0, (graph_height_in - ly_in) * 96.0)
+                except ValueError:
+                    label_pos = None
+            parsed_edges.append(_GraphvizEdgeLayout(points=points, label_pos=label_pos))
+
+    node_top_left: Dict[str, Tuple[float, float]] = {}
+    min_x = 0.0
+    min_y = 0.0
+    first_point = True
+
+    for node in nodes:
+        if node.node_id not in node_positions_center:
+            raise DiagramagicSemanticError(
+                "E_GRAPH_LAYOUT_PARSE",
+                f'Graphviz output missing node "{node.node_id}"',
+            )
+        x_in, y_in, w_in, h_in = node_positions_center[node.node_id]
+        cx = x_in * 96.0
+        cy = (graph_height_in - y_in) * 96.0
+        w = w_in * 96.0
+        h = h_in * 96.0
+        tlx = cx - w / 2.0
+        tly = cy - h / 2.0
+        node_top_left[node.node_id] = (tlx, tly)
+        if first_point:
+            min_x, min_y = tlx, tly
+            first_point = False
+        else:
+            min_x = min(min_x, tlx)
+            min_y = min(min_y, tly)
+
+    for edge_layout in parsed_edges:
+        for px, py in edge_layout.points:
+            min_x = min(min_x, px)
+            min_y = min(min_y, py)
+        if edge_layout.label_pos is not None:
+            min_x = min(min_x, edge_layout.label_pos[0])
+            min_y = min(min_y, edge_layout.label_pos[1])
+
+    if min_x < 0 or min_y < 0:
+        shift_x = -min_x if min_x < 0 else 0.0
+        shift_y = -min_y if min_y < 0 else 0.0
+        for node_id, (x, y) in list(node_top_left.items()):
+            node_top_left[node_id] = (x + shift_x, y + shift_y)
+        for edge_layout in parsed_edges:
+            edge_layout.points = [(x + shift_x, y + shift_y) for (x, y) in edge_layout.points]
+            if edge_layout.label_pos is not None:
+                edge_layout.label_pos = (
+                    edge_layout.label_pos[0] + shift_x,
+                    edge_layout.label_pos[1] + shift_y,
+                )
+
+    if len(parsed_edges) < len(edges):
+        raise DiagramagicSemanticError(
+            "E_GRAPH_LAYOUT_PARSE",
+            (
+                "unexpected Graphviz plain output: edge count mismatch "
+                f"(got {len(parsed_edges)}, expected at least {len(edges)})"
+            ),
+        )
+    return _GraphvizLayoutResult(
+        node_positions=node_top_left,
+        edge_layouts=parsed_edges[: len(edges)],
+    )
 
 
 def _parse_graph_nonnegative_length(

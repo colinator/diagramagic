@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -393,9 +394,11 @@ class CLIAcceptanceTests(unittest.TestCase):
         self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='start']"))
         self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='work']"))
         self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}g[@id='done']"))
-        lines = root.findall(".//{http://www.w3.org/2000/svg}line")
-        self.assertEqual(len(lines), 2)
-        self.assertTrue((lines[0].get("marker-end") or "").startswith("url(#diag-graph-arrow-default-"))
+        paths = root.findall(".//{http://www.w3.org/2000/svg}path")
+        self.assertGreaterEqual(len(paths), 2)
+        self.assertTrue(
+            any((p.get("marker-end") or "").startswith("url(#diag-graph-arrow-default-") for p in paths)
+        )
         labels = root.findall(".//{http://www.w3.org/2000/svg}text")
         self.assertTrue(any((t.text or "").strip() == "step1" for t in labels))
 
@@ -617,6 +620,182 @@ class CLIAcceptanceTests(unittest.TestCase):
         h1 = float(n1.find(".//{http://www.w3.org/2000/svg}rect").get("height"))
         h2 = float(n2.find(".//{http://www.w3.org/2000/svg}rect").get("height"))
         self.assertGreater(h1, h2)
+
+    def test_graph_layout_attr_validation(self) -> None:
+        bad_layout = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="force">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", bad_layout])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_ARGS", err)
+
+        bad_routing = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph routing="zigzag">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", bad_routing])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_ARGS", err)
+
+        bad_quality = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph quality="ultra">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", bad_quality])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_ARGS", err)
+
+    def test_graph_non_layered_requires_graphviz_when_missing(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="circular">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value=None):
+            code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPHVIZ_UNAVAILABLE", err)
+
+    def test_graph_layered_falls_back_without_graphviz(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="layered" direction="TB">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value=None):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        self.assertIsNotNone(root.find(".//{http://www.w3.org/2000/svg}path"))
+
+    def test_graph_circular_uses_graphviz_paths(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="circular" routing="polyline">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b" label="ab"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        plain = "\n".join(
+            [
+                "graph 1 4 3",
+                "node a 1 2 1 0.5 a solid box black lightgrey",
+                "node b 3 1 1 0.5 b solid box black lightgrey",
+                "edge a b 4 1.5 2 2.0 2.0 2.5 1.5 2.9 1.2 ab 2.2 1.6 solid black",
+                "stop",
+            ]
+        )
+        fake = subprocess.CompletedProcess(args=["dot"], returncode=0, stdout=plain, stderr="")
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value="/usr/bin/dot"), mock.patch(
+            "diagramagic.diagramagic.subprocess.run", return_value=fake
+        ):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        paths = root.findall(".//{http://www.w3.org/2000/svg}path")
+        self.assertTrue(any((p.get("d") or "").startswith("M ") for p in paths))
+        labels = root.findall(".//{http://www.w3.org/2000/svg}text")
+        self.assertTrue(any((t.text or "").strip() == "ab" for t in labels))
+
+    def test_graph_curved_routing_emits_bezier_path(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="layered" routing="curved" direction="TB">
+    <diag:node id="a" padding="8" background-style="fill:#eef;stroke:#55f;stroke-width:1"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b" padding="8" background-style="fill:#eef;stroke:#55f;stroke-width:1"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        plain = "\n".join(
+            [
+                "graph 1 4 3",
+                "node a 1 2 1 0.5 a solid box black lightgrey",
+                "node b 3 1 1 0.5 b solid box black lightgrey",
+                "edge a b 4 1 2 1.5 1.8 2.2 1.4 3 1 solid black",
+                "stop",
+            ]
+        )
+        fake = subprocess.CompletedProcess(args=["dot"], returncode=0, stdout=plain, stderr="")
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value="/usr/bin/dot"), mock.patch(
+            "diagramagic.diagramagic.subprocess.run", return_value=fake
+        ):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        path = root.find(".//{http://www.w3.org/2000/svg}path[@marker-end]")
+        self.assertIsNotNone(path)
+        self.assertIn(" C ", path.get("d") or "")
+
+    def test_graph_edge_endpoint_clips_to_target_border(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="circular" routing="polyline">
+    <diag:node id="a" padding="8" background-style="fill:#eef;stroke:#55f;stroke-width:1"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b" padding="8" background-style="fill:#eef;stroke:#55f;stroke-width:1"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        plain = "\n".join(
+            [
+                "graph 1 4 3",
+                "node a 1 2 1 0.5 a solid box black lightgrey",
+                "node b 3 1 1 0.5 b solid box black lightgrey",
+                "edge a b 2 1 2 3 1 solid black",
+                "stop",
+            ]
+        )
+        fake = subprocess.CompletedProcess(args=["dot"], returncode=0, stdout=plain, stderr="")
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value="/usr/bin/dot"), mock.patch(
+            "diagramagic.diagramagic.subprocess.run", return_value=fake
+        ):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        path = root.find(".//{http://www.w3.org/2000/svg}path[@marker-end]")
+        self.assertIsNotNone(path)
+        d = path.get("d") or ""
+        nums = [float(v) for v in re.findall(r"-?\d+(?:\.\d+)?", d)]
+        self.assertGreaterEqual(len(nums), 4)
+        x_end, y_end = nums[-2], nums[-1]
+
+        b = root.find(".//{http://www.w3.org/2000/svg}g[@id='b']")
+        self.assertIsNotNone(b)
+        m = re.search(r"translate\(([-0-9.]+),\s*([-0-9.]+)\)", b.get("transform") or "")
+        self.assertIsNotNone(m)
+        tx, ty = float(m.group(1)), float(m.group(2))
+        rect = b.find(".//{http://www.w3.org/2000/svg}rect")
+        self.assertIsNotNone(rect)
+        w = float(rect.get("width"))
+        h = float(rect.get("height"))
+        left, top, right, bottom = tx, ty, tx + w, ty + h
+
+        on_left = abs(x_end - left) < 0.01 and top - 0.01 <= y_end <= bottom + 0.01
+        on_right = abs(x_end - right) < 0.01 and top - 0.01 <= y_end <= bottom + 0.01
+        on_top = abs(y_end - top) < 0.01 and left - 0.01 <= x_end <= right + 0.01
+        on_bottom = abs(y_end - bottom) < 0.01 and left - 0.01 <= x_end <= right + 0.01
+        self.assertTrue(on_left or on_right or on_top or on_bottom)
 
     def test_accepts_multiple_diag_namespace_uris(self) -> None:
         with tempfile.TemporaryDirectory() as td:

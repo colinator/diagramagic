@@ -179,3 +179,69 @@
   </diag:flex>
 </diag:diagram>
 ```
+
+## 13) Layered graph with explicit routing
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph layout="layered" routing="ortho" quality="balanced" direction="LR" node-gap="20" rank-gap="52">
+    <diag:node id="client" padding="10" gap="6"><text style="font-size:12px">Client</text></diag:node>
+    <diag:node id="api" padding="10" gap="6"><text style="font-size:12px">API</text></diag:node>
+    <diag:node id="auth" padding="10" gap="6"><text style="font-size:12px">Auth</text></diag:node>
+    <diag:node id="db" padding="10" gap="6"><text style="font-size:12px">DB</text></diag:node>
+    <diag:edge from="client" to="api"/>
+    <diag:edge from="api" to="auth"/>
+    <diag:edge from="api" to="db"/>
+    <diag:edge from="auth" to="db"/>
+  </diag:graph>
+</diag:diagram>
+```
+
+## 14) Circular dependency graph
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph layout="circular" routing="polyline" quality="balanced" node-gap="24" rank-gap="40">
+    <diag:node id="api" padding="10" gap="6"><text style="font-size:12px">API</text></diag:node>
+    <diag:node id="auth" padding="10" gap="6"><text style="font-size:12px">Auth</text></diag:node>
+    <diag:node id="billing" padding="10" gap="6"><text style="font-size:12px">Billing</text></diag:node>
+    <diag:node id="db" padding="10" gap="6"><text style="font-size:12px">DB</text></diag:node>
+    <diag:edge from="api" to="auth"/>
+    <diag:edge from="auth" to="billing"/>
+    <diag:edge from="billing" to="db"/>
+    <diag:edge from="db" to="api"/>
+  </diag:graph>
+</diag:diagram>
+```
+
+## 15) Radial hub-and-spoke graph
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph layout="radial" routing="polyline" quality="balanced" node-gap="20" rank-gap="54">
+    <diag:node id="core" padding="10" gap="6"><text style="font-size:12px">Core</text></diag:node>
+    <diag:node id="ingress" padding="10" gap="6"><text style="font-size:12px">Ingress</text></diag:node>
+    <diag:node id="search" padding="10" gap="6"><text style="font-size:12px">Search</text></diag:node>
+    <diag:node id="worker" padding="10" gap="6"><text style="font-size:12px">Worker</text></diag:node>
+    <diag:node id="storage" padding="10" gap="6"><text style="font-size:12px">Storage</text></diag:node>
+    <diag:edge from="core" to="ingress"/>
+    <diag:edge from="core" to="search"/>
+    <diag:edge from="core" to="worker"/>
+    <diag:edge from="core" to="storage"/>
+  </diag:graph>
+</diag:diagram>
+```
+
+## 16) Curved routing caution pattern
+```xml
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <diag:graph layout="layered" routing="curved" quality="high" direction="TB">
+    <diag:node id="start" padding="10"><text style="font-size:12px">start</text></diag:node>
+    <diag:node id="a" padding="10"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b" padding="10"><text style="font-size:12px">B</text></diag:node>
+    <diag:node id="end" padding="10"><text style="font-size:12px">end</text></diag:node>
+    <diag:edge from="start" to="a"/>
+    <diag:edge from="start" to="b"/>
+    <diag:edge from="a" to="end"/>
+    <diag:edge from="b" to="end"/>
+    <diag:edge from="end" to="a" stroke-dasharray="4 2"/>
+  </diag:graph>
+</diag:diagram>
+```

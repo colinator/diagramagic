@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.5 379.65 371.974" width="379.65" height="371.974">
+  <rect x="-20.5" y="-20.5" width="379.65" height="371.974" fill="#fff" />
+  <style>
+    .svc { fill:#fff4db; stroke:#f39c12; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 154.819 297.974 L 128.746 271.902 L 80.524 223.68 L 38.833 181.982" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 38.84 148.982 L 64.909 122.918 L 113.136 74.688 L 154.822 33" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 187.82 33 L 213.898 59.078 L 262.118 107.299 L 303.81 148.982" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 303.814 181.982 L 277.738 208.061 L 229.517 256.287 L 187.823 297.974" />
+    <g id="api" transform="translate(151.656, 297.974)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="39.328" height="33" class="svc" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">API</text>
+        </g>
+      </g>
+    </g>
+    <g id="auth" transform="translate(0, 148.982)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="44.672" height="33" class="svc" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Auth</text>
+        </g>
+      </g>
+    </g>
+    <g id="billing" transform="translate(145.306, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="52.031" height="33" class="svc" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Billing</text>
+        </g>
+      </g>
+    </g>
+    <g id="db" transform="translate(301.978, 148.982)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="36.672" height="33" class="svc" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">DB</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

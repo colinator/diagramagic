@@ -1,0 +1,18 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20">
+  <style>
+    .svc { fill:#fff4db; stroke:#f39c12; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <diag:graph layout="circular" routing="polyline" quality="balanced" node-gap="24" rank-gap="40">
+    <diag:node id="api" padding="10" gap="6" background-class="svc"><text class="t">API</text></diag:node>
+    <diag:node id="auth" padding="10" gap="6" background-class="svc"><text class="t">Auth</text></diag:node>
+    <diag:node id="billing" padding="10" gap="6" background-class="svc"><text class="t">Billing</text></diag:node>
+    <diag:node id="db" padding="10" gap="6" background-class="svc"><text class="t">DB</text></diag:node>
+    <diag:edge from="api" to="auth"/>
+    <diag:edge from="auth" to="billing"/>
+    <diag:edge from="billing" to="db"/>
+    <diag:edge from="db" to="api"/>
+  </diag:graph>
+</diag:diagram>

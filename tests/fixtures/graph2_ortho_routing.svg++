@@ -1,0 +1,18 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20">
+  <style>
+    .box { fill:#eef2ff; stroke:#5b6ac9; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <diag:graph layout="layered" routing="ortho" quality="balanced" direction="LR" node-gap="18" rank-gap="52">
+    <diag:node id="client" padding="10" gap="6" background-class="box"><text class="t">Client</text></diag:node>
+    <diag:node id="api" padding="10" gap="6" background-class="box"><text class="t">API</text></diag:node>
+    <diag:node id="auth" padding="10" gap="6" background-class="box"><text class="t">Auth</text></diag:node>
+    <diag:node id="db" padding="10" gap="6" background-class="box"><text class="t">DB</text></diag:node>
+    <diag:edge from="client" to="api" label="req"/>
+    <diag:edge from="api" to="auth" label="verify"/>
+    <diag:edge from="api" to="db" label="query"/>
+    <diag:edge from="auth" to="db"/>
+  </diag:graph>
+</diag:diagram>

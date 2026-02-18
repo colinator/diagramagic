@@ -48,10 +48,19 @@ Do not stop at first compile success; iterate until the rendered result matches 
 - Use `<diag:arrow from="..." to="...">` for connectors.
 - Keep non-`diag:` SVG attributes untouched unless intentionally changed.
 - If topology/ranking is the core problem, use `<diag:graph>` + `<diag:node>`/`<diag:edge>` for structure.
+- Choose graph layout deliberately:
+  - `layout="layered"` for flowcharts, request pipelines, dependency chains.
+  - `layout="radial"` for hub-and-spoke systems.
+  - `layout="circular"` for peer/cyclic systems.
+- Choose routing deliberately:
+  - `routing="auto"` as default.
+  - `routing="ortho"`/`"polyline"` for dense technical diagrams where readability matters most.
+  - `routing="curved"` for lighter conceptual diagrams; avoid it for dense feedback-heavy graphs.
 - Treat `diag:graph` as scaffolding, not the full design: still use normal SVG/flex for titles, regions, legends, and contextual annotations.
 - Keep graph nodes content-rich (title + supporting text) instead of single-token labels when detail matters.
 - For title+body graph nodes, set `diag:node gap="6"` to `gap="12"` to avoid cramped text blocks.
 - If graph layout is cluttered, split into multiple subgraphs with `diag:include` or use a hybrid flex + arrows composition.
+- `layout="circular"` and `layout="radial"` require system Graphviz (`dot`) on PATH; layered layout can fall back if unavailable.
 
 ## Quality bar
 

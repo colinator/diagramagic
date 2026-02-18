@@ -48,7 +48,10 @@ The diagram automatically sizes to fit your content—no need to specify `width`
   - Child elements: `<diag:node>` and `<diag:edge>` only.
   - `diag:node` requires `id`; supports `width`, `min-width`, `padding`, `gap`, `background-class`, `background-style`.
   - `diag:edge` requires `from` + `to` (same-graph node ids); supports arrow-like stroke/label attributes.
-  - Layout attrs on graph: `direction="TB|BT|LR|RL"`, `node-gap`, `rank-gap`, optional `x`/`y` (top-level only).
+  - Layout attrs on graph: `direction="TB|BT|LR|RL"`, `node-gap`, `rank-gap`, optional `x`/`y` (top-level only), plus `layout="layered|circular|radial"` and `routing`/`quality`.
+  - Selector: `layout="layered"` for pipelines/flowcharts, `layout="radial"` for hub-and-spoke, `layout="circular"` for peer/cycle systems.
+  - Routing: prefer `routing="ortho"`/`"polyline"` for dense technical diagrams; use `routing="curved"` for lighter conceptual diagrams.
+  - `layout="circular|radial"` requires system Graphviz (`dot`) on PATH; `layered` falls back if unavailable.
 - `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
 - `<diag:flex>` children: other `<diag:flex>` nodes, `<text>`, and regular SVG elements.
 - `<diag:flex>` width defaults to content width; column flexes wrap children vertically, row flexes lay them out horizontally.
@@ -222,6 +225,11 @@ Use `diag:graph` when the structure is node-and-edge oriented (flowchart, archit
   </diag:graph>
 </diag:diagram>
 ```
+
+Layout quick examples:
+- layered flow: `<diag:graph layout="layered" routing="auto" direction="TB">...</diag:graph>`
+- circular deps: `<diag:graph layout="circular" routing="polyline">...</diag:graph>`
+- radial hub: `<diag:graph layout="radial" routing="polyline">...</diag:graph>`
 
 - Use `diag:graph` when topology/ranking is the hard part; do not use it as a substitute for full visual design.
 - `diag:edge` impacts layout; `diag:arrow` does not.

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.5 -20.5 415.506 388.266" width="415.506" height="388.266">
+  <rect x="-20.5" y="-20.5" width="415.506" height="388.266" fill="#fff" />
+  <style>
+    .hub { fill:#e8f8ef; stroke:#27ae60; stroke-width:1.2; rx:8; }
+    .leaf { fill:#f5f8ff; stroke:#4a6fa5; stroke-width:1; rx:6; }
+    .t { font-size:12px; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 202.867 157.133 L 230.237 129.763 L 283.68 76.32 L 326.997 33" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 169.865 157.133 L 142.493 129.763 L 89.052 76.32 L 45.733 33" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 169.867 190.133 L 142.493 217.507 L 89.052 270.948 L 45.734 314.266" />
+    <path stroke="#555" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 202.865 190.133 L 230.237 217.507 L 283.68 270.948 L 326.997 314.266" />
+    <g id="core" transform="translate(163.358, 157.133)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="46.016" height="33" class="hub" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Core</text>
+        </g>
+      </g>
+    </g>
+    <g id="ingress" transform="translate(313.824, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="59.344" height="33" class="leaf" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Ingress</text>
+        </g>
+      </g>
+    </g>
+    <g id="search" transform="translate(0.226, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="58.016" height="33" class="leaf" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Search</text>
+        </g>
+      </g>
+    </g>
+    <g id="worker" transform="translate(0, 314.266)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="58.469" height="33" class="leaf" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Worker</text>
+        </g>
+      </g>
+    </g>
+    <g id="storage" transform="translate(312.49, 314.266)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="62.016" height="33" class="leaf" />
+        <g transform="translate(10, 10)">
+          <text class="t" font-family="sans-serif" y="10">Storage</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

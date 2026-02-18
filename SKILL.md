@@ -35,6 +35,14 @@ You are writing SVG. The `diag:` extensions handle layout and sizing — they do
 - Use `<diag:diagram>` root with `xmlns="http://www.w3.org/2000/svg"` and `xmlns:diag="https://diagramagic.ai/ns"`
 - Use `diag:flex` for layout structure (stacks, rows, grids of cards) — but fill those containers with rich, detailed content
 - Use `diag:graph` for auto-layout when topology matters (flowcharts, dependency graphs) — but treat it as scaffolding, not the complete design
+- Choose graph layout deliberately:
+  - `layout="layered"` for flowcharts, request pipelines, dependency chains
+  - `layout="radial"` for hub-and-spoke systems
+  - `layout="circular"` for peer/cyclic systems
+- Choose routing deliberately:
+  - `routing="auto"` as default
+  - `routing="ortho"`/`"polyline"` for dense technical diagrams where readability matters most
+  - `routing="curved"` for lighter conceptual diagrams; avoid it for dense feedback-heavy graphs
 - Keep graph nodes content-rich (title + details), not just single-line labels
 - For title+body graph nodes, set `diag:node gap="6"` to `gap="12"` to avoid cramped text blocks
 - If graph output gets crowded, split into multiple subgraphs with `diag:include` or switch to a hybrid flex + arrows structure
@@ -45,6 +53,7 @@ You are writing SVG. The `diag:` extensions handle layout and sizing — they do
 - Use `diag:template` when you have 3+ visually identical elements (e.g., entity cards, service boxes)
 - Mix raw SVG freely: `<rect>`, `<line>`, `<circle>`, `<path>` for decorative elements, region backgrounds, custom shapes
 - Do NOT stop at first compile — iterate until the render matches intent
+- `layout="circular"` and `layout="radial"` require system Graphviz (`dot`) on PATH; layered layout can fall back if unavailable
 
 ## Error Recovery
 
