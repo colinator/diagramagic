@@ -108,9 +108,9 @@
     .box { fill:#e8f4f8; stroke:#2980b9; stroke-width:1; rx:4; }
   </style>
   <diag:graph direction="TB" node-gap="28" rank-gap="44">
-    <diag:node id="start" padding="10" background-class="box"><text style="font-size:13px">Start</text></diag:node>
-    <diag:node id="process" padding="10" background-class="box"><text style="font-size:13px">Process Data</text></diag:node>
-    <diag:node id="done" padding="10" background-class="box"><text style="font-size:13px">Done</text></diag:node>
+    <diag:node id="start" padding="10" gap="6" background-class="box"><text style="font-size:13px">Start</text></diag:node>
+    <diag:node id="process" padding="10" gap="6" background-class="box"><text style="font-size:13px">Process Data</text></diag:node>
+    <diag:node id="done" padding="10" gap="6" background-class="box"><text style="font-size:13px">Done</text></diag:node>
     <diag:edge from="start" to="process" label="step"/>
     <diag:edge from="process" to="done"/>
   </diag:graph>
@@ -125,10 +125,10 @@
     .db { fill:#dfe6e9; stroke:#636e72; stroke-width:1; rx:6; }
   </style>
   <diag:graph direction="LR" node-gap="20" rank-gap="52">
-    <diag:node id="client" padding="10" background-class="svc"><text style="font-size:12px">Client</text></diag:node>
-    <diag:node id="api" padding="10" background-class="svc"><text style="font-size:12px">API</text></diag:node>
-    <diag:node id="auth" padding="10" background-class="svc"><text style="font-size:12px">Auth</text></diag:node>
-    <diag:node id="db" padding="10" background-class="db"><text style="font-size:12px">Database</text></diag:node>
+    <diag:node id="client" padding="10" gap="6" background-class="svc"><text style="font-size:12px">Client</text></diag:node>
+    <diag:node id="api" padding="10" gap="6" background-class="svc"><text style="font-size:12px">API</text></diag:node>
+    <diag:node id="auth" padding="10" gap="6" background-class="svc"><text style="font-size:12px">Auth</text></diag:node>
+    <diag:node id="db" padding="10" gap="6" background-class="db"><text style="font-size:12px">Database</text></diag:node>
     <diag:edge from="client" to="api" label="HTTPS"/>
     <diag:edge from="api" to="auth" label="verify"/>
     <diag:edge from="api" to="db" label="query"/>
@@ -145,9 +145,9 @@
     <diag:flex width="980" direction="row" gap="12">
       <diag:flex width="720" padding="10" background-class="panel">
         <diag:graph direction="LR" node-gap="18" rank-gap="44">
-          <diag:node id="gw" width="180" padding="8" background-class="svc"><text style="font-size:13px;font-weight:bold">API Gateway</text><text style="font-size:11px" diag:wrap="true">authn, rate limit, routing</text></diag:node>
-          <diag:node id="auth" width="180" padding="8" background-class="svc"><text style="font-size:13px;font-weight:bold">Auth</text><text style="font-size:11px" diag:wrap="true">JWT + session checks</text></diag:node>
-          <diag:node id="db" width="180" padding="8" background-class="db"><text style="font-size:13px;font-weight:bold">DB</text><text style="font-size:11px" diag:wrap="true">primary + read replica</text></diag:node>
+          <diag:node id="gw" width="180" padding="8" gap="6" background-class="svc"><text style="font-size:13px;font-weight:bold">API Gateway</text><text style="font-size:11px" diag:wrap="true">authn, rate limit, routing</text></diag:node>
+          <diag:node id="auth" width="180" padding="8" gap="6" background-class="svc"><text style="font-size:13px;font-weight:bold">Auth</text><text style="font-size:11px" diag:wrap="true">JWT + session checks</text></diag:node>
+          <diag:node id="db" width="180" padding="8" gap="6" background-class="db"><text style="font-size:13px;font-weight:bold">DB</text><text style="font-size:11px" diag:wrap="true">primary + read replica</text></diag:node>
           <diag:edge from="gw" to="auth" label="verify"/>
           <diag:edge from="auth" to="db" label="lookup"/>
         </diag:graph>

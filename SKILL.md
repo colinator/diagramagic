@@ -36,6 +36,7 @@ You are writing SVG. The `diag:` extensions handle layout and sizing — they do
 - Use `diag:flex` for layout structure (stacks, rows, grids of cards) — but fill those containers with rich, detailed content
 - Use `diag:graph` for auto-layout when topology matters (flowcharts, dependency graphs) — but treat it as scaffolding, not the complete design
 - Keep graph nodes content-rich (title + details), not just single-line labels
+- For title+body graph nodes, set `diag:node gap="6"` to `gap="12"` to avoid cramped text blocks
 - If graph output gets crowded, split into multiple subgraphs with `diag:include` or switch to a hybrid flex + arrows structure
 - Use `diag:wrap="true"` on `<text>` for multi-line text (wrapping is a text feature, not a `diag:node` feature)
 - Use `diag:arrow` with `id`-tagged elements for connectors

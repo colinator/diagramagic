@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-21 -21 262 200" width="262" height="200">
+  <rect x="-21" y="-21" width="262" height="200" fill="#0f1117" />
+  <style>
+    .node { fill:#2d3a1f; stroke:#a0bf5c; stroke-width:2; rx:10; }
+    .title { font-size:16px; font-weight:bold; fill:#e8e8f0; }
+    .detail { font-size:10px; fill:#a0a0b8; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <line x1="110" y1="69" x2="110" y2="89" stroke="#555" stroke-width="1" marker-end="url(#diag-graph-arrow-default-1)" />
+    <g id="http_req" transform="translate(0, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="69" class="node" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="13">Incoming HTTP Request</text>
+        </g>
+        <g transform="translate(10, 37)">
+          <text class="detail" font-family="sans-serif" y="8">
+            <tspan x="0" dy="0">Client sends request to host:port — TCP</tspan>
+            <tspan x="0" dy="1.2em">connection accepted by event loop</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+    <g id="asgi" transform="translate(0, 89)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="69" class="node" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="13">Uvicorn / ASGI Server</text>
+        </g>
+        <g transform="translate(10, 37)">
+          <text class="detail" font-family="sans-serif" y="8">
+            <tspan x="0" dy="0">uvloop event loop, HTTP/1.1 or HTTP/2</tspan>
+            <tspan x="0" dy="1.2em">parsing, creates ASGI scope dict</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

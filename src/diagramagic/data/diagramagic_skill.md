@@ -50,6 +50,7 @@ Do not stop at first compile success; iterate until the rendered result matches 
 - If topology/ranking is the core problem, use `<diag:graph>` + `<diag:node>`/`<diag:edge>` for structure.
 - Treat `diag:graph` as scaffolding, not the full design: still use normal SVG/flex for titles, regions, legends, and contextual annotations.
 - Keep graph nodes content-rich (title + supporting text) instead of single-token labels when detail matters.
+- For title+body graph nodes, set `diag:node gap="6"` to `gap="12"` to avoid cramped text blocks.
 - If graph layout is cluttered, split into multiple subgraphs with `diag:include` or use a hybrid flex + arrows composition.
 
 ## Quality bar

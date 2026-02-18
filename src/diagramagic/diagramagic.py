@@ -111,6 +111,12 @@ class _GraphExpansionState:
     graph_counter: int = 0
 
 
+@dataclass
+class _ClassStyleRule:
+    class_name: str
+    declarations: Dict[str, str]
+
+
 class _TextMeasurer:
     """Caches Pillow fonts and exposes width/line height helpers."""
 
@@ -333,14 +339,15 @@ def diagramagic(
     )
     if has_includes:
         _ensure_unique_ids(root)
-    _expand_graphs_in_tree(root, diag_ns)
+    class_style_rules = _collect_class_style_rules(root)
+    _expand_graphs_in_tree(root, diag_ns, class_style_rules)
     anchor_specs = _collect_anchors(root, diag_ns)
     arrow_specs = _collect_arrows(root, diag_ns)
 
     svg_root = ET.Element(_q("svg"))
     _copy_svg_attributes(root, svg_root, diag_ns)
 
-    root_font_family, root_font_path = _font_family_info(root, diag_ns)
+    root_font_family, root_font_path = _font_family_info(root, diag_ns, class_style_rules)
     for child in root:
         rendered, _, _, bbox = _render_node(
             child,
@@ -348,6 +355,7 @@ def diagramagic(
             wrap_width_hint=None,
             inherited_family=root_font_family,
             inherited_path=root_font_path,
+            class_style_rules=class_style_rules,
         )
         if rendered is not None:
             svg_root.append(rendered)
@@ -361,7 +369,9 @@ def diagramagic(
     return _pretty_xml(svg_root)
 
 
-def _expand_graphs_in_tree(root: ET.Element, diag_ns: str) -> None:
+def _expand_graphs_in_tree(
+    root: ET.Element, diag_ns: str, class_style_rules: List[_ClassStyleRule]
+) -> None:
     state = _graph_expansion_state(root, diag_ns)
 
     def _walk(node: ET.Element, *, inside_graph: bool) -> None:
@@ -380,7 +390,11 @@ def _expand_graphs_in_tree(root: ET.Element, diag_ns: str) -> None:
                     )
                 state.graph_counter += 1
                 rendered_graph = _expand_single_graph(
-                    child, diag_ns, state, graph_index=state.graph_counter
+                    child,
+                    diag_ns,
+                    state,
+                    class_style_rules=class_style_rules,
+                    graph_index=state.graph_counter,
                 )
                 new_children.append(rendered_graph)
                 continue
@@ -423,6 +437,7 @@ def _expand_single_graph(
     graph_node: ET.Element,
     diag_ns: str,
     state: _GraphExpansionState,
+    class_style_rules: List[_ClassStyleRule],
     *,
     graph_index: int,
 ) -> ET.Element:
@@ -456,7 +471,7 @@ def _expand_single_graph(
                 f"unsupported child <{local}> under <diag:graph>; only diag:node and diag:edge are allowed",
             )
         if local == "node":
-            node_spec = _collect_graph_node(child, diag_ns)
+            node_spec = _collect_graph_node(child, diag_ns, class_style_rules)
             if node_spec.node_id in node_by_id:
                 raise DiagramagicSemanticError(
                     "E_GRAPH_DUPLICATE_NODE",
@@ -727,7 +742,9 @@ def _expand_single_include(
     return wrapper
 
 
-def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
+def _collect_graph_node(
+    node: ET.Element, diag_ns: str, class_style_rules: List[_ClassStyleRule]
+) -> _GraphNodeSpec:
     node_id = (node.get("id") or "").strip()
     if not node_id:
         raise DiagramagicSemanticError("E_GRAPH_NODE_MISSING_ID", "diag:node requires non-empty id")
@@ -739,6 +756,7 @@ def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
         node, "min-width", 0.0, error_code="E_GRAPH_ARGS"
     )
     padding = _parse_graph_nonnegative_length(node, "padding", 8.0, error_code="E_GRAPH_ARGS")
+    gap = _parse_graph_nonnegative_length(node, "gap", 0.0, error_code="E_GRAPH_ARGS")
     for descendant in node.iter():
         if descendant is node:
             continue
@@ -753,6 +771,7 @@ def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
     flex_node = ET.Element(_qual(diag_ns, "flex"))
     flex_node.set("direction", "column")
     flex_node.set("padding", _fmt(padding))
+    flex_node.set("gap", _fmt(gap))
     if width_explicit and width is not None:
         flex_node.set("width", _fmt(max(width, min_width)))
     elif min_width > 0:
@@ -774,6 +793,7 @@ def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
         inherited_family=None,
         inherited_path=None,
         wrap_width_hint=None,
+        class_style_rules=class_style_rules,
     )
 
     final_width = measured_width
@@ -787,6 +807,7 @@ def _collect_graph_node(node: ET.Element, diag_ns: str) -> _GraphNodeSpec:
         "width",
         "min-width",
         "padding",
+        "gap",
         "background-class",
         "background-style",
     }
@@ -1155,6 +1176,7 @@ def _render_node(
     wrap_width_hint: Optional[float],
     inherited_family: Optional[str],
     inherited_path: Optional[str],
+    class_style_rules: List[_ClassStyleRule],
 ) -> Tuple[
     Optional[ET.Element],
     float,
@@ -1174,6 +1196,7 @@ def _render_node(
             inherited_family=inherited_family,
             inherited_path=inherited_path,
             wrap_width_hint=wrap_width_hint,
+            class_style_rules=class_style_rules,
         )
     if ns == diag_ns:
         return None, 0.0, 0.0, None
@@ -1185,6 +1208,7 @@ def _render_node(
             wrap_width_hint,
             inherited_family=inherited_family,
             inherited_path=inherited_path,
+            class_style_rules=class_style_rules,
         )
 
     rendered = _render_generic_node(
@@ -1193,6 +1217,7 @@ def _render_node(
         wrap_width_hint,
         inherited_family,
         inherited_path,
+        class_style_rules,
     )
     width, height, bbox = _measure_rendered_node(rendered)
     return rendered, width, height, bbox
@@ -1204,6 +1229,7 @@ def _render_flex(
     inherited_family: Optional[str],
     inherited_path: Optional[str],
     wrap_width_hint: Optional[float],
+    class_style_rules: List[_ClassStyleRule],
 ) -> Tuple[ET.Element, float, float, Tuple[float, float, float, float]]:
     direction = node.get("direction", "column").strip().lower()
     gap = _parse_length(node.get("gap"), 0.0)
@@ -1215,7 +1241,7 @@ def _render_flex(
     bg_class = node.get("background-class")
     bg_style = node.get("background-style")
 
-    local_family, local_path = _font_family_info(node, diag_ns)
+    local_family, local_path = _font_family_info(node, diag_ns, class_style_rules)
     combined_family = local_family or inherited_family
     combined_path = local_path or inherited_path
 
@@ -1230,6 +1256,7 @@ def _render_flex(
             wrap_width_hint=child_wrap_hint,
             inherited_family=combined_family,
             inherited_path=combined_path,
+            class_style_rules=class_style_rules,
         )
         if rendered is not None:
             child_entries.append((rendered, w, h))
@@ -1347,6 +1374,7 @@ def _render_text(
     wrap_width_hint: Optional[float],
     inherited_family: Optional[str],
     inherited_path: Optional[str],
+    class_style_rules: List[_ClassStyleRule],
 ) -> Tuple[
     ET.Element,
     float,
@@ -1358,8 +1386,8 @@ def _render_text(
     if max_width is not None:
         wrap_width_hint = _parse_length(max_width, wrap_width_hint)
 
-    font_size = _infer_font_size(node)
-    font_family, font_path = _font_family_info(node, diag_ns)
+    font_size = _infer_font_size(node, class_style_rules)
+    font_family, font_path = _font_family_info(node, diag_ns, class_style_rules)
     if not font_family:
         font_family = inherited_family
     if not font_path:
@@ -2395,6 +2423,7 @@ def _render_generic_node(
     wrap_width_hint: Optional[float],
     inherited_family: Optional[str],
     inherited_path: Optional[str],
+    class_style_rules: List[_ClassStyleRule],
 ) -> ET.Element:
     clone = ET.Element(node.tag, _filtered_attrib(node.attrib, diag_ns))
     if node.text:
@@ -2406,6 +2435,7 @@ def _render_generic_node(
             wrap_width_hint=wrap_width_hint,
             inherited_family=inherited_family,
             inherited_path=inherited_path,
+            class_style_rules=class_style_rules,
         )
         if child_rendered is not None:
             clone.append(child_rendered)
@@ -2440,7 +2470,7 @@ def _ensure_text_baseline(elem: ET.Element, ascent: float) -> None:
         elem.set("y", _fmt(ascent))
 
 
-def _infer_font_size(node: ET.Element) -> float:
+def _infer_font_size(node: ET.Element, class_style_rules: List[_ClassStyleRule]) -> float:
     if "font-size" in node.attrib:
         return _parse_length(node.attrib["font-size"], 16.0)
     style = node.get("style")
@@ -2448,11 +2478,16 @@ def _infer_font_size(node: ET.Element) -> float:
         match = re.search(r"font-size:\s*([0-9.]+)", style)
         if match:
             return float(match.group(1))
+    class_font_size = _class_style_value(node, class_style_rules, "font-size")
+    if class_font_size:
+        parsed = _parse_length(class_font_size, None)
+        if parsed is not None:
+            return float(parsed)
     return 16.0
 
 
 def _font_family_info(
-    node: ET.Element, diag_ns: str
+    node: ET.Element, diag_ns: str, class_style_rules: List[_ClassStyleRule]
 ) -> Tuple[Optional[str], Optional[str]]:
     diag_font_path = node.get(_qual(diag_ns, "font-path"))
     if diag_font_path:
@@ -2465,9 +2500,55 @@ def _font_family_info(
             match = re.search(r"font-family:\s*([^;]+)", style)
             if match:
                 family = match.group(1)
+    if not family:
+        family = _class_style_value(node, class_style_rules, "font-family")
     if family:
         family = _strip_quotes(family.strip())
     return family, diag_font_path
+
+
+def _collect_class_style_rules(root: ET.Element) -> List[_ClassStyleRule]:
+    rules: List[_ClassStyleRule] = []
+    for style_node in root.iter(_q("style")):
+        css_text = "".join(style_node.itertext())
+        if not css_text:
+            continue
+        for selector_text, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css_text, flags=re.MULTILINE):
+            declarations: Dict[str, str] = {}
+            for decl in body.split(";"):
+                if ":" not in decl:
+                    continue
+                key, value = decl.split(":", 1)
+                key = key.strip().lower()
+                value = value.strip()
+                if key and value:
+                    declarations[key] = value
+            if not declarations:
+                continue
+            selectors = [s.strip() for s in selector_text.split(",") if s.strip()]
+            for selector in selectors:
+                # Support simple class selectors like `.x` or `text.x`.
+                for class_name in re.findall(r"\.([A-Za-z_][A-Za-z0-9_-]*)", selector):
+                    rules.append(
+                        _ClassStyleRule(class_name=class_name, declarations=declarations.copy())
+                    )
+    return rules
+
+
+def _class_style_value(
+    node: ET.Element, class_style_rules: List[_ClassStyleRule], prop: str
+) -> Optional[str]:
+    class_attr = node.get("class") or ""
+    if not class_attr:
+        return None
+    class_names = set(part for part in class_attr.split() if part)
+    if not class_names:
+        return None
+    resolved: Optional[str] = None
+    for rule in class_style_rules:
+        if rule.class_name in class_names and prop in rule.declarations:
+            resolved = rule.declarations[prop]
+    return resolved
 
 
 def _collect_font_paths(node: ET.Element, diag_ns: str) -> List[str]:

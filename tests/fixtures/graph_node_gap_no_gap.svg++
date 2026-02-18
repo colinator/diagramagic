@@ -1,0 +1,24 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20"
+              diag:background="#0f1117">
+  <style>
+    .node { fill:#2d3a1f; stroke:#a0bf5c; stroke-width:2; rx:10; }
+    .title { font-size:16px; font-weight:bold; fill:#e8e8f0; }
+    .detail { font-size:10px; fill:#a0a0b8; }
+  </style>
+
+  <diag:graph direction="TB" rank-gap="20">
+    <diag:node id="http_req" width="220" padding="10" gap="0" background-class="node">
+      <text class="title">Incoming HTTP Request</text>
+      <text class="detail" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+
+    <diag:node id="asgi" width="220" padding="10" gap="0" background-class="node">
+      <text class="title">Uvicorn / ASGI Server</text>
+      <text class="detail" diag:wrap="true">uvloop event loop, HTTP/1.1 or HTTP/2 parsing, creates ASGI scope dict</text>
+    </diag:node>
+
+    <diag:edge from="http_req" to="asgi"/>
+  </diag:graph>
+</diag:diagram>

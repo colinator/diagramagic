@@ -156,7 +156,7 @@ v1 constraints:
 
 `diag:node`:
 - required: `id`
-- optional: `width`, `min-width`, `padding`, `background-class`, `background-style`
+- optional: `width`, `min-width`, `padding`, `gap`, `background-class`, `background-style`
 - content model follows flex-style content rendering
 
 `diag:edge`:

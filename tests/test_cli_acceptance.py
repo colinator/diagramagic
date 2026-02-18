@@ -545,6 +545,79 @@ class CLIAcceptanceTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertIn("E_GRAPH_TOO_LARGE", err)
 
+    def test_graph_wrap_uses_class_font_size_for_measurement(self) -> None:
+        with_class = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .detail { font-size:10px; }
+  </style>
+  <diag:graph>
+    <diag:node id="http_req" width="220" padding="10">
+      <text class="detail" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        without_class = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="http_req" width="220" padding="10">
+      <text class="detail" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, out1, _png, err = self.run_cli(["compile", "--text", with_class, "--stdout"])
+        self.assertEqual(code, 0, err)
+        code, out2, _png, err = self.run_cli(["compile", "--text", without_class, "--stdout"])
+        self.assertEqual(code, 0, err)
+
+        root1 = ET.fromstring(out1)
+        root2 = ET.fromstring(out2)
+        n1 = root1.find(".//{http://www.w3.org/2000/svg}g[@id='http_req']")
+        n2 = root2.find(".//{http://www.w3.org/2000/svg}g[@id='http_req']")
+        self.assertIsNotNone(n1)
+        self.assertIsNotNone(n2)
+        lines1 = n1.findall(".//{http://www.w3.org/2000/svg}tspan")
+        lines2 = n2.findall(".//{http://www.w3.org/2000/svg}tspan")
+        self.assertLess(len(lines1), len(lines2))
+
+    def test_graph_node_gap_controls_internal_spacing(self) -> None:
+        with_gap = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="n1" width="220" padding="10" gap="10" background-style="fill:#223;stroke:#99b;stroke-width:1">
+      <text style="font-size:16px;font-weight:bold">Incoming HTTP Request</text>
+      <text style="font-size:10px" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        without_gap = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="n1" width="220" padding="10" gap="0" background-style="fill:#223;stroke:#99b;stroke-width:1">
+      <text style="font-size:16px;font-weight:bold">Incoming HTTP Request</text>
+      <text style="font-size:10px" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, out1, _png, err = self.run_cli(["compile", "--text", with_gap, "--stdout"])
+        self.assertEqual(code, 0, err)
+        code, out2, _png, err = self.run_cli(["compile", "--text", without_gap, "--stdout"])
+        self.assertEqual(code, 0, err)
+
+        root1 = ET.fromstring(out1)
+        root2 = ET.fromstring(out2)
+        n1 = root1.find(".//{http://www.w3.org/2000/svg}g[@id='n1']")
+        n2 = root2.find(".//{http://www.w3.org/2000/svg}g[@id='n1']")
+        self.assertIsNotNone(n1)
+        self.assertIsNotNone(n2)
+        h1 = float(n1.find(".//{http://www.w3.org/2000/svg}rect").get("height"))
+        h2 = float(n2.find(".//{http://www.w3.org/2000/svg}rect").get("height"))
+        self.assertGreater(h1, h2)
+
     def test_accepts_multiple_diag_namespace_uris(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             src = Path(td) / "input.svg++"

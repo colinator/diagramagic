@@ -3,6 +3,7 @@ Start with a top-level column flex for page structure.
 Use nested row/column flex instead of manual y-coordinate math.
 Template repeated components (3+ uses) with diag:template/diag:instance.
 Use diag:wrap="true" for multi-word text blocks.
+For graph nodes with title + body text, set diag:node gap (typically 6-12) so lines are not cramped.
 Use stable id attributes on connected elements before adding diag:arrow.
 For diag:arrow, set from/to to element ids or diag:anchor ids (not template names or labels).
 Use diag:anchor when you need precise connection points or timeline-style alignment.

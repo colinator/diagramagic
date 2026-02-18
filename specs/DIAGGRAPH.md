@@ -71,6 +71,7 @@ A node in the graph. Behaves like a `<diag:flex direction="column">` internally 
 |-----------|---------|-------------|
 | `width` | auto | Exact outer width in pixels. Auto = sized to content. |
 | `padding` | `8` | Inner padding (pixels) |
+| `gap` | `0` | Vertical space between node children (same as flex `gap`) |
 | `background-class` | — | CSS class for the auto-generated background rect |
 | `background-style` | — | Inline styles for the background rect |
 | `min-width` | `0` | Minimum width (pixels) |

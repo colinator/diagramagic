@@ -46,7 +46,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
   - Included content is opaque in v1; no cross-boundary ID references.
 - `<diag:graph>` — automatic node/edge layout for flowcharts and dependency graphs.
   - Child elements: `<diag:node>` and `<diag:edge>` only.
-  - `diag:node` requires `id`; supports `width`, `min-width`, `padding`, `background-class`, `background-style`.
+  - `diag:node` requires `id`; supports `width`, `min-width`, `padding`, `gap`, `background-class`, `background-style`.
   - `diag:edge` requires `from` + `to` (same-graph node ids); supports arrow-like stroke/label attributes.
   - Layout attrs on graph: `direction="TB|BT|LR|RL"`, `node-gap`, `rank-gap`, optional `x`/`y` (top-level only).
 - `<diag:flex>` attributes: `x`, `y`, `width`, `direction="column|row"`, `gap`, `padding`, `background-class`, `background-style`.
@@ -340,6 +340,7 @@ diagramagic compile tcp.svg++ > tcp.svg
 - Always bind the `diag:` namespace: `xmlns:diag="https://diagramagic.ai/ns"` (preferred).
 - Use column flexes for stacked cards, row flexes for timelines or step lists.
 - Leverage `gap` to control spacing between items rather than inserting empty `<text>` nodes.
+- For title+body graph nodes, prefer `diag:node gap="6"` to `gap="12"` for cleaner internal spacing.
 - For nested layouts without explicit widths, the parent's available width is inherited automatically so wrapped text stays consistent.
 - Keep styles in a `<style>` block in the root `<diag:diagram>`; normal CSS works for classes.
 - Keep node content rich: favor title + supporting text over one-word boxes on complex diagrams.

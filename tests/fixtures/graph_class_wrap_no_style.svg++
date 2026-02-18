@@ -1,0 +1,14 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg"
+              xmlns:diag="https://diagramagic.ai/ns"
+              diag:padding="20" diag:background="#0f1117">
+  <style>
+    .entry { fill:#2d3a1f; stroke:#a0bf5c; stroke-width:2; rx:10; }
+  </style>
+
+  <diag:graph direction="TB" node-gap="24" rank-gap="36">
+    <diag:node id="http_req" width="220" padding="10" background-class="entry">
+      <text class="title-text">Incoming HTTP Request</text>
+      <text class="detail-text" diag:wrap="true">Client sends request to host:port — TCP connection accepted by event loop</text>
+    </diag:node>
+  </diag:graph>
+</diag:diagram>

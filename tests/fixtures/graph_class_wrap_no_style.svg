@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-21 -21 262 147" width="262" height="147">
+  <rect x="-21" y="-21" width="262" height="147" fill="#0f1117" />
+  <style>
+    .entry { fill:#2d3a1f; stroke:#a0bf5c; stroke-width:2; rx:10; }
+  </style>
+  <g transform="translate(0, 0)">
+    <g id="http_req" transform="translate(0, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="105" class="entry" />
+        <g transform="translate(10, 10)">
+          <text class="title-text" font-family="sans-serif" y="13">Incoming HTTP Request</text>
+        </g>
+        <g transform="translate(10, 27)">
+          <text class="detail-text" font-family="sans-serif" y="13">
+            <tspan x="0" dy="0">Client sends request to</tspan>
+            <tspan x="0" dy="1.2em">host:port — TCP</tspan>
+            <tspan x="0" dy="1.2em">connection accepted by</tspan>
+            <tspan x="0" dy="1.2em">event loop</tspan>
+          </text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
