@@ -402,6 +402,43 @@ class CLIAcceptanceTests(unittest.TestCase):
         labels = root.findall(".//{http://www.w3.org/2000/svg}text")
         self.assertTrue(any((t.text or "").strip() == "step1" for t in labels))
 
+    def test_graph_edge_label_rotate_modes(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph layout="layered" direction="LR">
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b" label="e0"/>
+    <diag:edge from="a" to="b" label="e1" label-rotate="follow" stroke="#f00"/>
+    <diag:edge from="a" to="b" label="e2" label-rotate="vertical" stroke="#0a0"/>
+    <diag:edge from="a" to="b" label="e3" label-rotate="-30" stroke="#00f"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value=None):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        labels = [t for t in root.findall(".//{http://www.w3.org/2000/svg}text") if (t.text or "").strip() in {"e0", "e1", "e2", "e3"}]
+        by_text = {(t.text or "").strip(): t for t in labels}
+        self.assertNotIn("transform", by_text["e0"].attrib)  # default horizontal
+        self.assertIn("rotate(90", by_text["e2"].get("transform", ""))
+        self.assertIn("rotate(-30", by_text["e3"].get("transform", ""))
+
+    def test_graph_edge_label_rotate_invalid_value_errors(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <diag:graph>
+    <diag:node id="a"><text style="font-size:12px">A</text></diag:node>
+    <diag:node id="b"><text style="font-size:12px">B</text></diag:node>
+    <diag:edge from="a" to="b" label="x" label-rotate="weird"/>
+  </diag:graph>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_GRAPH_ARGS", err)
+
     def test_graph_direction_rl_positions_ranks_right_to_left(self) -> None:
         src = """
 <diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
@@ -531,6 +568,41 @@ class CLIAcceptanceTests(unittest.TestCase):
         code, repeat, _png, err = self.run_cli(["compile", "--text", with_graph, "--stdout"])
         self.assertEqual(code, 0, err)
         self.assertEqual(out1, repeat)
+
+    def test_wide_graph_does_not_stretch_fixed_width_flex_siblings(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <style>
+    .hdr { fill:#f0f0f0; stroke:#777; stroke-width:1; }
+    .node { fill:#eef; stroke:#66f; stroke-width:1; }
+  </style>
+  <diag:flex width="300" direction="column" gap="8">
+    <diag:flex id="hdr" width="300" padding="8" background-class="hdr">
+      <text style="font-size:14px">Header Should Stay 300</text>
+    </diag:flex>
+    <diag:graph layout="layered" direction="LR" node-gap="20" rank-gap="40">
+      <diag:node id="n1" width="140" padding="8" background-class="node"><text style="font-size:12px">N1</text></diag:node>
+      <diag:node id="n2" width="140" padding="8" background-class="node"><text style="font-size:12px">N2</text></diag:node>
+      <diag:node id="n3" width="140" padding="8" background-class="node"><text style="font-size:12px">N3</text></diag:node>
+      <diag:node id="n4" width="140" padding="8" background-class="node"><text style="font-size:12px">N4</text></diag:node>
+      <diag:node id="n5" width="140" padding="8" background-class="node"><text style="font-size:12px">N5</text></diag:node>
+      <diag:edge from="n1" to="n2"/>
+      <diag:edge from="n2" to="n3"/>
+      <diag:edge from="n3" to="n4"/>
+      <diag:edge from="n4" to="n5"/>
+    </diag:graph>
+  </diag:flex>
+</diag:diagram>
+""".strip()
+        with mock.patch("diagramagic.diagramagic.shutil.which", return_value=None):
+            code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        hdr = root.find(".//{http://www.w3.org/2000/svg}g[@id='hdr']")
+        self.assertIsNotNone(hdr)
+        rect = hdr.find(".//{http://www.w3.org/2000/svg}rect")
+        self.assertIsNotNone(rect)
+        self.assertAlmostEqual(float(rect.get("width")), 300.0, delta=0.001)
 
     def test_graph_too_large_error(self) -> None:
         parts = [
@@ -1002,6 +1074,39 @@ class CLIAcceptanceTests(unittest.TestCase):
             angle_str = transform[len("rotate("):].split(" ", 1)[0]
             angle = float(angle_str)
             self.assertLessEqual(abs(angle), 90.0)
+
+    def test_arrow_label_rotate_modes(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="a" x="0" y="0" width="40" height="20"/>
+  <rect id="b" x="120" y="80" width="40" height="20"/>
+  <diag:arrow from="a" to="b" label="d0"/>
+  <diag:arrow from="a" to="b" label="d1" label-rotate="follow" stroke="#f00"/>
+  <diag:arrow from="a" to="b" label="d2" label-rotate="vertical" stroke="#0a0"/>
+  <diag:arrow from="a" to="b" label="d3" label-rotate="45" stroke="#00f"/>
+</diag:diagram>
+""".strip()
+        code, out, _png, err = self.run_cli(["compile", "--text", src, "--stdout"])
+        self.assertEqual(code, 0, err)
+        root = ET.fromstring(out)
+        labels = [t for t in root.findall(".//{http://www.w3.org/2000/svg}text") if (t.text or "").strip() in {"d0", "d1", "d2", "d3"}]
+        by_text = {(t.text or "").strip(): t for t in labels}
+        self.assertNotIn("transform", by_text["d0"].attrib)  # default horizontal
+        self.assertIn("rotate(", by_text["d1"].get("transform", ""))  # follow
+        self.assertIn("rotate(90", by_text["d2"].get("transform", ""))  # vertical
+        self.assertIn("rotate(45", by_text["d3"].get("transform", ""))  # explicit
+
+    def test_arrow_label_rotate_invalid_value_errors(self) -> None:
+        src = """
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns">
+  <rect id="a" x="0" y="0" width="40" height="20"/>
+  <rect id="b" x="120" y="80" width="40" height="20"/>
+  <diag:arrow from="a" to="b" label="bad" label-rotate="diagonalish"/>
+</diag:diagram>
+""".strip()
+        code, _out, _png, err = self.run_cli(["compile", "--text", src])
+        self.assertEqual(code, 3)
+        self.assertIn("E_SVGPP_SEMANTIC", err)
 
     def test_arrow_inside_transformed_group_uses_local_coords(self) -> None:
         src = """

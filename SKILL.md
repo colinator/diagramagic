@@ -48,6 +48,7 @@ You are writing SVG. The `diag:` extensions handle layout and sizing — they do
 - If graph output gets crowded, split into multiple subgraphs with `diag:include` or switch to a hybrid flex + arrows structure
 - Use `diag:wrap="true"` on `<text>` for multi-line text (wrapping is a text feature, not a `diag:node` feature)
 - Use `diag:arrow` with `id`-tagged elements for connectors
+- Use `label-rotate="horizontal"` for readable arrow/edge labels by default; use `follow` only when line-following text is intentionally desired
 - Use `diag:anchor` for precise named points (sequence diagrams, etc.)
 - Use `diag:include` to compose large diagrams from sub-files
 - Use `diag:template` when you have 3+ visually identical elements (e.g., entity cards, service boxes)

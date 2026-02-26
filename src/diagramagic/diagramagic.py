@@ -73,6 +73,7 @@ class _ArrowSpec:
     label: Optional[str]
     label_size: float
     label_fill: str
+    label_rotate: str
     passthrough_attrs: Dict[str, str]
 
 
@@ -103,6 +104,7 @@ class _GraphEdgeSpec:
     label: Optional[str]
     label_size: float
     label_fill: str
+    label_rotate: str
     passthrough_attrs: Dict[str, str]
 
 
@@ -920,9 +922,15 @@ def _collect_graph_edge(node: ET.Element) -> _GraphEdgeSpec:
             f'diag:edge label-size must be > 0 (got {node.get("label-size")!r})',
         )
     label_fill = node.get("label-fill") or "#555"
+    label_rotate = _parse_label_rotate(
+        node.get("label-rotate"),
+        default="horizontal",
+        error_code="E_GRAPH_ARGS",
+        context="<diag:edge>",
+    )
 
     passthrough: Dict[str, str] = {}
-    control_attrs = {"from", "to", "label", "label-size", "label-fill"}
+    control_attrs = {"from", "to", "label", "label-size", "label-fill", "label-rotate"}
     for key, value in node.attrib.items():
         if _namespace_of(key) is not None:
             continue
@@ -936,6 +944,7 @@ def _collect_graph_edge(node: ET.Element) -> _GraphEdgeSpec:
         label=label,
         label_size=float(label_size),
         label_fill=label_fill,
+        label_rotate=label_rotate,
         passthrough_attrs=passthrough,
     )
 
@@ -1110,6 +1119,7 @@ def _emit_graph_edge_label(
         "fill": edge.label_fill,
         "dominant-baseline": "alphabetic",
     }
+    _apply_label_rotation(attrs, edge.label_rotate, dx=dx, dy=dy, x=lx, y=ly)
     label = ET.Element(_q("text"), attrs)
     label.text = edge.label
     graph_group.append(label)
@@ -1128,6 +1138,10 @@ def _emit_graph_edge_label_at(
         "fill": edge.label_fill,
         "dominant-baseline": "alphabetic",
     }
+    # Graphviz provided label anchors may not include tangent info in our current
+    # parser path; for follow mode here we keep horizontal fallback until tangent
+    # data is threaded through.
+    _apply_label_rotation(attrs, edge.label_rotate, dx=0.0, dy=0.0, x=point[0], y=point[1])
     label = ET.Element(_q("text"), attrs)
     label.text = edge.label
     graph_group.append(label)
@@ -1727,7 +1741,9 @@ def _layout_column(
         else None
     )
     if interior_target is not None:
-        interior_width = max(interior_target, max_child_width)
+        # Explicit flex width is authoritative; oversized children may overflow
+        # visually but should not force sibling/container reflow.
+        interior_width = interior_target
     else:
         interior_width = max_child_width
     y_cursor = padding
@@ -1743,8 +1759,6 @@ def _layout_column(
     interior_height = max(y_cursor - padding, 0.0)
     total_height = interior_height + 2 * padding
     total_width = interior_width + 2 * padding
-    if target_total_width is not None:
-        total_width = max(total_width, target_total_width)
     return total_width, total_height
 
 
@@ -1764,7 +1778,9 @@ def _layout_row(
         else None
     )
     if interior_target is not None:
-        interior_width = max(interior_target, natural_width)
+        # Explicit flex width is authoritative; oversized children may overflow
+        # visually but should not force sibling/container reflow.
+        interior_width = interior_target
     else:
         interior_width = natural_width
     max_height = max((h for _, _, h in children), default=0.0)
@@ -1777,8 +1793,6 @@ def _layout_row(
         container.append(wrapper)
         x_cursor += child_width + gap
     total_width = interior_width + 2 * padding
-    if target_total_width is not None:
-        total_width = max(total_width, target_total_width)
     total_height = max_height + 2 * padding
     return total_width, total_height
 
@@ -1943,6 +1957,12 @@ def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
         label = node.get("label")
         label_size = _parse_length(node.get("label-size"), 10.0) or 10.0
         label_fill = node.get("label-fill") or "#555"
+        label_rotate = _parse_label_rotate(
+            node.get("label-rotate"),
+            default="horizontal",
+            error_code="E_SVGPP_SEMANTIC",
+            context="<diag:arrow>",
+        )
 
         passthrough_attrs: Dict[str, str] = {}
         control_attrs = {
@@ -1951,6 +1971,7 @@ def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
             "label",
             "label-size",
             "label-fill",
+            "label-rotate",
         }
         for key, value in node.attrib.items():
             if _namespace_of(key) is not None:
@@ -1968,6 +1989,7 @@ def _collect_arrows(root: ET.Element, diag_ns: str) -> List[_ArrowSpec]:
                 label=label,
                 label_size=label_size,
                 label_fill=label_fill,
+                label_rotate=label_rotate,
                 passthrough_attrs=passthrough_attrs,
             )
         )
@@ -2331,12 +2353,6 @@ def _emit_arrow_label(
     lx = mid_x + nx * label_offset
     ly = mid_y + ny * label_offset
 
-    angle = math.degrees(math.atan2(dy, dx))
-    # Keep text orientation readable (never upside-down).
-    if angle > 90.0:
-        angle -= 180.0
-    elif angle < -90.0:
-        angle += 180.0
     attrs = {
         "x": _fmt(lx),
         "y": _fmt(ly),
@@ -2345,11 +2361,61 @@ def _emit_arrow_label(
         "fill": arrow.label_fill,
         "dominant-baseline": "alphabetic",
     }
-    if abs(angle) >= 15.0:
-        attrs["transform"] = f"rotate({_fmt(angle)} {_fmt(lx)} {_fmt(ly)})"
+    _apply_label_rotation(attrs, arrow.label_rotate, dx=dx, dy=dy, x=lx, y=ly)
     text = ET.Element(_q("text"), attrs)
     text.text = arrow.label
     svg_root.append(text)
+
+
+def _parse_label_rotate(
+    raw_value: Optional[str],
+    *,
+    default: str,
+    error_code: str,
+    context: str,
+) -> str:
+    if raw_value is None:
+        return default
+    value = raw_value.strip().lower()
+    if value in {"horizontal", "vertical", "follow"}:
+        return value
+    parsed = _parse_length(value, None)
+    if parsed is None:
+        raise DiagramagicSemanticError(
+            error_code,
+            f'{context} attribute "label-rotate" must be one of horizontal|vertical|follow or numeric degrees (got {raw_value!r})',
+        )
+    return _fmt(float(parsed))
+
+
+def _apply_label_rotation(
+    attrs: Dict[str, str],
+    mode: str,
+    *,
+    dx: float,
+    dy: float,
+    x: float,
+    y: float,
+) -> None:
+    angle: Optional[float] = None
+    if mode == "horizontal":
+        angle = None
+    elif mode == "vertical":
+        angle = 90.0
+    elif mode == "follow":
+        if abs(dx) <= 1e-9 and abs(dy) <= 1e-9:
+            angle = None
+        else:
+            angle = math.degrees(math.atan2(dy, dx))
+            if angle > 90.0:
+                angle -= 180.0
+            elif angle < -90.0:
+                angle += 180.0
+    else:
+        # numeric degrees stored as normalized string
+        angle = float(mode)
+    if angle is not None and abs(angle) >= 1e-9:
+        attrs["transform"] = f"rotate({_fmt(angle)} {_fmt(x)} {_fmt(y)})"
 
 
 def _bbox_center(bbox: Tuple[float, float, float, float]) -> Tuple[float, float]:

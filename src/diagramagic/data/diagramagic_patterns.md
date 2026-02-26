@@ -70,7 +70,7 @@
   <diag:flex id="db" x="320" y="40" width="180" padding="10" background-class="card">
     <text style="font-size:14px">Database</text>
   </diag:flex>
-  <diag:arrow from="auth" to="db" label="queries" stroke="#e67e22" stroke-width="1.5"/>
+  <diag:arrow from="auth" to="db" label="queries" label-rotate="horizontal" stroke="#e67e22" stroke-width="1.5"/>
 </diag:diagram>
 ```
 
@@ -129,7 +129,7 @@
     <diag:node id="api" padding="10" gap="6" background-class="svc"><text style="font-size:12px">API</text></diag:node>
     <diag:node id="auth" padding="10" gap="6" background-class="svc"><text style="font-size:12px">Auth</text></diag:node>
     <diag:node id="db" padding="10" gap="6" background-class="db"><text style="font-size:12px">Database</text></diag:node>
-    <diag:edge from="client" to="api" label="HTTPS"/>
+    <diag:edge from="client" to="api" label="HTTPS" label-rotate="horizontal"/>
     <diag:edge from="api" to="auth" label="verify"/>
     <diag:edge from="api" to="db" label="query"/>
     <diag:edge from="auth" to="db" stroke-dasharray="4 2"/>

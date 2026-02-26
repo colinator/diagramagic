@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20.6 -20.6 641.211 178.869" width="641.211" height="178.869">
+  <rect x="-20.6" y="-20.6" width="641.211" height="178.869" fill="#fff" />
+  <style>
+    .node { fill:#fff7ed; stroke:#fb923c; stroke-width:1.2; rx:6; }
+    .title { font-size:12px; font-weight:bold; fill:#7c2d12; }
+    .body { font-size:11px; fill:#57534e; }
+  </style>
+  <g transform="translate(0, 0)">
+    <defs>
+      <marker id="diag-graph-arrow-default-1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#555" />
+      </marker>
+    </defs>
+    <path stroke="#ea580c" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 144.912 86.669 C 169.325 77.078 195.158 66.777 235.234 51" />
+    <path stroke="#0f766e" stroke-dasharray="5 3" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 283.155 51 C 234.73 124.27 345.677 124.455 440.011 117.807" />
+    <path stroke="#be123c" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 160 98.829 C 389.328 60.588 415.162 70.89 455.24 86.669" />
+    <path stroke="#4338ca" stroke-dasharray="2 2" stroke-width="1" fill="none" marker-end="url(#diag-graph-arrow-default-1)" d="M 440.011 105.9 C 365.578 100.067 254.63 99.876 160 106.537" />
+    <g id="ingress" transform="translate(0, 86.669)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="160" height="51" class="node" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="10">Ingress</text>
+        </g>
+        <g transform="translate(10, 29)">
+          <text class="body" font-family="sans-serif" y="9">entry</text>
+        </g>
+      </g>
+    </g>
+    <g id="service" transform="translate(220.008, 0)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="160" height="51" class="node" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="10">Service</text>
+        </g>
+        <g transform="translate(10, 29)">
+          <text class="body" font-family="sans-serif" y="9">core logic</text>
+        </g>
+      </g>
+    </g>
+    <g id="store" transform="translate(440.011, 86.669)">
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="160" height="51" class="node" />
+        <g transform="translate(10, 10)">
+          <text class="title" font-family="sans-serif" y="10">Store</text>
+        </g>
+        <g transform="translate(10, 29)">
+          <text class="body" font-family="sans-serif" y="9">persist</text>
+        </g>
+      </g>
+    </g>
+    <text x="192.203" y="74.417" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" font-family="sans-serif">default horizontal</text>
+    <text x="407.81" y="74.417" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(21.502 407.81 74.417)" font-family="sans-serif">follow</text>
+    <text x="300.006" y="118.169" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(90 300.006 118.169)" font-family="sans-serif">vertical</text>
+    <text x="300.006" y="106.169" text-anchor="middle" font-size="10" fill="#555" dominant-baseline="alphabetic" transform="rotate(-25 300.006 106.169)" font-family="sans-serif">-25deg</text>
+  </g>
+</svg>

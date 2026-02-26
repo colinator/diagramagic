@@ -1,0 +1,22 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .box { fill:#eef6ff; stroke:#3b82f6; stroke-width:1.2; rx:6; }
+    .title { font-size:12px; font-weight:bold; fill:#1e3a8a; }
+    .body { font-size:11px; fill:#334155; }
+  </style>
+
+  <diag:flex id="left" x="30" y="40" width="180" padding="10" gap="6" direction="column" background-class="box">
+    <text class="title">Producer</text>
+    <text class="body">emits events</text>
+  </diag:flex>
+
+  <diag:flex id="right" x="350" y="200" width="180" padding="10" gap="6" direction="column" background-class="box">
+    <text class="title">Consumer</text>
+    <text class="body">handles events</text>
+  </diag:flex>
+
+  <diag:arrow from="left" to="right" label="default horizontal" stroke="#2563eb" stroke-width="1.6"/>
+  <diag:arrow from="right" to="left" label="follow" label-rotate="follow" stroke="#059669" stroke-width="1.6" stroke-dasharray="5 3"/>
+  <diag:arrow from="left" to="right" label="vertical" label-rotate="vertical" stroke="#dc2626" stroke-width="1.2"/>
+  <diag:arrow from="right" to="left" label="30deg" label-rotate="30" stroke="#7c3aed" stroke-width="1.2" stroke-dasharray="2 2"/>
+</diag:diagram>

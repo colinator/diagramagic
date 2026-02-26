@@ -46,6 +46,7 @@ Do not stop at first compile success; iterate until the rendered result matches 
 - Prefer flex layout over manual coordinates for vertical/horizontal stacks.
 - Use `id` on elements that arrows or focus operations target.
 - Use `<diag:arrow from="..." to="...">` for connectors.
+- Use `label-rotate="horizontal"` for readable arrow/edge labels by default; use `follow` only when line-following text is intentionally desired.
 - Keep non-`diag:` SVG attributes untouched unless intentionally changed.
 - If topology/ranking is the core problem, use `<diag:graph>` + `<diag:node>`/`<diag:edge>` for structure.
 - Choose graph layout deliberately:

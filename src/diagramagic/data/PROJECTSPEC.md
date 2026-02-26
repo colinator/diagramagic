@@ -104,11 +104,12 @@ Behavior:
 
 Attributes:
 - required: `from`, `to`
-- optional: `label`, `label-size`, `label-fill`, stroke/presentation attrs, marker attrs
+- optional: `label`, `label-size`, `label-fill`, `label-rotate`, stroke/presentation attrs, marker attrs
 
 Behavior:
 - endpoints resolved by center-line/border intersection (or exact anchor points)
 - if marker attrs omitted, default `marker-end` arrowhead is added
+- `label-rotate` controls label orientation: `horizontal` (default), `follow`, `vertical`, or numeric degrees
 - legacy `from-edge` / `to-edge` overrides are not supported
 
 ### 4.6 `<diag:anchor>`
@@ -161,7 +162,8 @@ v1 constraints:
 
 `diag:edge`:
 - required: `from`, `to` (same-graph node ids)
-- optional: label attrs + standard stroke/presentation attrs + markers
+- optional: label attrs (`label`, `label-size`, `label-fill`, `label-rotate`) + standard stroke/presentation attrs + markers
+- `label-rotate` values match `diag:arrow`: `horizontal` (default), `follow`, `vertical`, or numeric degrees
 - self-edges are not supported in v1
 
 Layout algorithm (v1):

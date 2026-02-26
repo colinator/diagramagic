@@ -34,7 +34,8 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 - `<diag:flex>` — column/row layout block.
 - `<diag:arrow>` — connector between two elements by `id`.
   - Required attributes: `from`, `to` (element or anchor ids).
-  - Optional attributes: `label`, `label-size`, `label-fill`, standard SVG stroke/presentation attributes (`stroke`, `stroke-width`, `stroke-dasharray`, etc.), and optional `marker-end`/`marker-start`.
+  - Optional attributes: `label`, `label-size`, `label-fill`, `label-rotate`, standard SVG stroke/presentation attributes (`stroke`, `stroke-width`, `stroke-dasharray`, etc.), and optional `marker-end`/`marker-start`.
+  - `label-rotate` values: `horizontal` (default), `follow`, `vertical`, or numeric degrees (for example `45`).
   - Endpoints are chosen automatically via center-line intersection with each target bbox.
 - `<diag:anchor>` — invisible named coordinate point.
   - Required: `id`.
@@ -76,6 +77,7 @@ The diagram automatically sizes to fit your content—no need to specify `width`
 | `label` | No | none | text | Optional text centered at arrow midpoint |
 | `label-size` | No | `10` | pixels | Label font size |
 | `label-fill` | No | `#555` | color | Label text color |
+| `label-rotate` | No | `horizontal` | keyword/deg | `horizontal`, `follow`, `vertical`, or numeric degrees |
 | `marker-end`, `marker-start` | No | auto `marker-end` | marker URL | If omitted, default arrowhead is added to marker-end |
 | stroke/presentation attrs | No | SVG defaults | SVG units | Passed through to emitted `<line>` |
 | **diag:anchor** | | | | |
@@ -170,6 +172,7 @@ Use arrows to connect rendered elements by id:
 - Endpoints are selected automatically via center-line intersection with each element bbox.
 - If an endpoint is an anchor id, that endpoint uses the exact anchor coordinate.
 - Optional arrow attrs: `label`, `label-size`, `label-fill`, plus standard SVG stroke/presentation attrs.
+- `label-rotate` controls label orientation: `horizontal` (default), `follow`, `vertical`, or numeric degrees.
 - If no marker attributes are specified, a default arrowhead is added to `marker-end`.
 
 ## Anchors
@@ -233,6 +236,7 @@ Layout quick examples:
 
 - Use `diag:graph` when topology/ranking is the hard part; do not use it as a substitute for full visual design.
 - `diag:edge` impacts layout; `diag:arrow` does not.
+- `diag:edge` and `diag:arrow` both support `label-rotate` for label orientation control.
 - `diag:graph` cannot be nested in another `diag:graph` in v1.
 
 ## Common Patterns

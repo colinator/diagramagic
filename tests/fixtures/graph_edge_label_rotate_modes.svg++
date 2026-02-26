@@ -1,0 +1,27 @@
+<diag:diagram xmlns="http://www.w3.org/2000/svg" xmlns:diag="https://diagramagic.ai/ns" diag:padding="20">
+  <style>
+    .node { fill:#fff7ed; stroke:#fb923c; stroke-width:1.2; rx:6; }
+    .title { font-size:12px; font-weight:bold; fill:#7c2d12; }
+    .body { font-size:11px; fill:#57534e; }
+  </style>
+
+  <diag:graph direction="LR" node-gap="30" rank-gap="60">
+    <diag:node id="ingress" width="160" padding="10" gap="6" background-class="node">
+      <text class="title">Ingress</text>
+      <text class="body">entry</text>
+    </diag:node>
+    <diag:node id="service" width="160" padding="10" gap="6" background-class="node">
+      <text class="title">Service</text>
+      <text class="body">core logic</text>
+    </diag:node>
+    <diag:node id="store" width="160" padding="10" gap="6" background-class="node">
+      <text class="title">Store</text>
+      <text class="body">persist</text>
+    </diag:node>
+
+    <diag:edge from="ingress" to="service" label="default horizontal" stroke="#ea580c"/>
+    <diag:edge from="service" to="store" label="follow" label-rotate="follow" stroke="#0f766e" stroke-dasharray="5 3"/>
+    <diag:edge from="ingress" to="store" label="vertical" label-rotate="vertical" stroke="#be123c"/>
+    <diag:edge from="store" to="ingress" label="-25deg" label-rotate="-25" stroke="#4338ca" stroke-dasharray="2 2"/>
+  </diag:graph>
+</diag:diagram>
